@@ -1,15 +1,20 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function useSafeArea() {
+export default function useSafeArea(includeBottom = false) {
   const insets = useSafeAreaInsets();
   
   return {
-    safeAreaStyles: {
+    // 🆕 SOLO áreas seguras, sin padding horizontal
+    safeAreaInsets: {
       paddingTop: insets.top,
-      //paddingBottom: insets.bottom,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
+      paddingBottom: includeBottom ? insets.bottom : 0,
     },
-    insets
+    // 🆕 Valores numéricos para casos específicos
+    insets: {
+      top: insets.top,
+      bottom: insets.bottom,
+      left: insets.left,
+      right: insets.right,
+    }
   };
 }

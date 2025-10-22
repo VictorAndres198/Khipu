@@ -2,18 +2,52 @@ import { StyleSheet } from 'react-native';
 import theme from './themes';
 
 export const globalStyles = StyleSheet.create({
-  // Contenedores
+  // *Contenedores
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  containerPadding: {
+  // Contenedor con padding horizontal estándar
+  containerWithPadding: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.md,
+  },
+  
+  // Contenedor con padding en todos los lados
+  containerWithFullPadding: {
     flex: 1,
     backgroundColor: theme.colors.background,
     padding: theme.spacing.md,
   },
   
-  // Textos
+  // Header con padding superior extra
+  headerContainer: {
+    paddingTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+  },
+  headerContainerNoPadding: {
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    // ← Sin padding horizontal
+  },
+  
+  // Footer con padding inferior extra
+  footerContainer: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+  },
+  
+  // Scroll content - para listas
+  scrollContent: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+  },
+
+
+  // *Textos
   title: {
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.fontSize.xxl,
@@ -39,7 +73,7 @@ export const globalStyles = StyleSheet.create({
     lineHeight: theme.typography.lineHeight.sm,
   },
   
-  // Botones
+  // *Botones
   button: {
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
@@ -59,7 +93,7 @@ export const globalStyles = StyleSheet.create({
     color: theme.colors.onPrimary,
   },
   
-  // Tarjetas
+  // *Tarjetas
   card: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
@@ -67,7 +101,7 @@ export const globalStyles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   
-  // Inputs
+  // *Inputs
   input: {
     borderWidth: 1,
     borderColor: theme.colors.outline,

@@ -27,6 +27,7 @@ export function TabBar({ state, descriptors, navigation }) {
       borderTopWidth: 1,
       borderTopColor: theme.colors.outline,
       paddingBottom: insets.bottom,
+      paddingHorizontal: theme.spacing.md,
     }}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];

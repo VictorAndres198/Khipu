@@ -66,7 +66,8 @@ export const lightTheme = {
     md: 16,
     lg: 24,
     xl: 32,
-    xxl: 48,
+    xxl: 48,     // ← Agregar este
+    xxxl: 64,    // ← Y este si quieres más opciones
   },
   
   // Border radius

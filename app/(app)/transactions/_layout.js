@@ -5,7 +5,6 @@ export default function TransactionsLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        // Hereda la presentación modal del layout padre
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />

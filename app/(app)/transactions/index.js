@@ -5,13 +5,15 @@ import useTheme from '../../../src/hooks/useTheme';
 import { globalStyles } from '../../../src/styles/GlobalStyles';
 
 const transactions = [
-  { id: '1', amount: -50, description: 'Pago a María', date: '2024-01-15' },
-  { id: '2', amount: -20, description: 'Recarga celular', date: '2024-01-14' },
-  { id: '3', amount: 100, description: 'Recibido de Juan', date: '2024-01-13' },
+  { id: '1', amount: -50, description: 'Pago a María', date: '15 Ene 2024' },
+  { id: '2', amount: -20, description: 'Recarga celular', date: '14 Ene 2024' },
+  { id: '3', amount: 100, description: 'Recibido de Juan', date: '13 Ene 2024' },
+  { id: '4', amount: -35, description: 'Almuerzo', date: '12 Ene 2024' },
+  { id: '5', amount: 80, description: 'Pago de cliente', date: '11 Ene 2024' },
 ];
 
 export default function TransactionsList() {
-  const { safeAreaStyles } = useSafeArea();
+  const { safeAreaInsets } = useSafeArea(true);
   const router = useRouter();
   const theme = useTheme();
 
@@ -45,23 +47,35 @@ export default function TransactionsList() {
   );
 
   return (
-    <View style={[globalStyles.containerPadding, safeAreaStyles]}>
-      <Text style={globalStyles.title}>Historial de Transacciones</Text>
+    <View style={[globalStyles.container, safeAreaInsets]}>
+      {/* Header Fijo - SIN padding horizontal extra */}
+    <View style={{
+      paddingTop: theme.spacing.lg,
+      paddingBottom: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md, // ← Agrega esto
+    }}>
+        <Text style={globalStyles.title}>Historial de Transacciones</Text>
+      </View>
       
+      {/* Lista con padding */}
       <FlatList
         data={transactions}
         keyExtractor={item => item.id}
         renderItem={renderTransactionItem}
-        style={{ marginTop: theme.spacing.lg }}
+        style={globalStyles.containerWithPadding}
+        contentContainerStyle={globalStyles.scrollContent}
         showsVerticalScrollIndicator={false}
       />
       
-      <TouchableOpacity 
-        style={[globalStyles.button, globalStyles.buttonPrimary, { marginTop: theme.spacing.lg }]}
-        onPress={() => router.back()}
-      >
-        <Text style={globalStyles.buttonText}>Cerrar</Text>
-      </TouchableOpacity>
+      {/* Footer Fijo */}
+      <View style={globalStyles.footerContainer}>
+        <TouchableOpacity 
+          style={[globalStyles.button, globalStyles.buttonPrimary]}
+          onPress={() => router.back()}
+        >
+          <Text style={globalStyles.buttonText}>Cerrar</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

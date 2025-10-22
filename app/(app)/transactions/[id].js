@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import useSafeArea from '../../../src/hooks/useSafeArea';
 import useTheme from '../../../src/hooks/useTheme';
@@ -32,11 +32,29 @@ const transactionDetails = {
     category: 'Transferencia',
     status: 'Completado'
   },
+  '4': { 
+    amount: -35, 
+    description: 'Almuerzo en restaurant', 
+    date: '12 Ene 2024', 
+    time: '13:20',
+    type: 'Pago',
+    category: 'Alimentación',
+    status: 'Completado'
+  },
+  '5': { 
+    amount: 80, 
+    description: 'Pago de cliente', 
+    date: '11 Ene 2024', 
+    time: '09:45',
+    type: 'Recepción',
+    category: 'Trabajo',
+    status: 'Completado'
+  },
 };
 
 export default function TransactionDetail() {
   const { id } = useLocalSearchParams();
-  const { safeAreaStyles } = useSafeArea();
+  const { safeAreaInsets } = useSafeArea(true);
   const router = useRouter();
   const theme = useTheme();
 
@@ -50,58 +68,74 @@ export default function TransactionDetail() {
   const isPositive = transaction.amount > 0;
 
   return (
-    <View style={[globalStyles.containerPadding, safeAreaStyles]}>
-      <Text style={globalStyles.title}>Detalle de Transacción</Text>
+    <View style={[globalStyles.container, safeAreaInsets]}>
+      {/* Header Fijo - SIN padding horizontal extra */}
+      <View style={{ 
+        paddingHorizontal: theme.spacing.md, // ← Agrega esto
+        paddingTop: theme.spacing.lg,
+        paddingBottom: theme.spacing.sm,
+      }}>
+        <Text style={globalStyles.title}>Detalle de Transacción</Text>
+      </View>
       
-      {/* Monto */}
-      <View style={[
-        globalStyles.card, 
-        { 
-          alignItems: 'center', 
-          marginTop: theme.spacing.lg,
-          backgroundColor: isPositive ? `${theme.colors.success}15` : `${theme.colors.error}15`
-        }
-      ]}>
-        <Text style={[
-          globalStyles.title,
+      {/* Contenido Scrollable */}
+      <ScrollView 
+        style={globalStyles.containerWithPadding}
+        contentContainerStyle={[globalStyles.scrollContent, { paddingBottom: theme.spacing.xxl }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Monto */}
+        <View style={[
+          globalStyles.card, 
           { 
-            color: isPositive ? theme.colors.success : theme.colors.error,
-            fontSize: theme.typography.fontSize.xxxl
+            alignItems: 'center', 
+            backgroundColor: isPositive ? `${theme.colors.success}15` : `${theme.colors.error}15`
           }
         ]}>
-          {isPositive ? '+' : '-'}S/ {Math.abs(transaction.amount)}
-        </Text>
-        <Text style={[globalStyles.body, { marginTop: theme.spacing.xs }]}>
-          {transaction.description}
-        </Text>
-      </View>
+          <Text style={[
+            globalStyles.title,
+            { 
+              color: isPositive ? theme.colors.success : theme.colors.error,
+              fontSize: theme.typography.fontSize.xxxl
+            }
+          ]}>
+            {isPositive ? '+' : '-'}S/ {Math.abs(transaction.amount)}
+          </Text>
+          <Text style={[globalStyles.body, { marginTop: theme.spacing.xs }]}>
+            {transaction.description}
+          </Text>
+        </View>
 
-      {/* Información detallada */}
-      <View style={[globalStyles.card, { marginTop: theme.spacing.lg }]}>
-        <Text style={[globalStyles.subtitle, { marginBottom: theme.spacing.md }]}>
-          Información
-        </Text>
-        
-        <DetailRow label="Fecha y hora" value={`${transaction.date} • ${transaction.time}`} />
-        <DetailRow label="Tipo" value={transaction.type} />
-        <DetailRow label="Categoría" value={transaction.category} />
-        <DetailRow 
-          label="Estado" 
-          value={transaction.status} 
-          valueStyle={{ 
-            color: transaction.status === 'Completado' ? theme.colors.success : theme.colors.warning,
-            fontWeight: 'bold'
-          }}
-        />
-        <DetailRow label="ID de transacción" value={id} />
+        {/* Información detallada */}
+        <View style={[globalStyles.card, { marginTop: theme.spacing.lg }]}>
+          <Text style={[globalStyles.subtitle, { marginBottom: theme.spacing.md }]}>
+            Información
+          </Text>
+          
+          <DetailRow label="Fecha y hora" value={`${transaction.date} • ${transaction.time}`} />
+          <DetailRow label="Tipo" value={transaction.type} />
+          <DetailRow label="Categoría" value={transaction.category} />
+          <DetailRow 
+            label="Estado" 
+            value={transaction.status} 
+            valueStyle={{ 
+              color: transaction.status === 'Completado' ? theme.colors.success : theme.colors.warning,
+              fontWeight: 'bold'
+            }}
+          />
+          <DetailRow label="ID de transacción" value={id} />
+        </View>
+      </ScrollView>
+
+      {/* Footer Fijo */}
+      <View style={globalStyles.footerContainer}>
+        <TouchableOpacity 
+          style={[globalStyles.button, globalStyles.buttonPrimary]}
+          onPress={() => router.back()}
+        >
+          <Text style={globalStyles.buttonText}>Volver</Text>
+        </TouchableOpacity>
       </View>
-      
-      <TouchableOpacity 
-        style={[globalStyles.button, globalStyles.buttonPrimary, { marginTop: theme.spacing.xl }]}
-        onPress={() => router.back()}
-      >
-        <Text style={globalStyles.buttonText}>Volver</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -114,13 +148,13 @@ function DetailRow({ label, value, valueStyle }) {
     <View style={{
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       paddingVertical: theme.spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.outline,
     }}>
-      <Text style={globalStyles.caption}>{label}</Text>
-      <Text style={[globalStyles.body, valueStyle]}>{value}</Text>
+      <Text style={[globalStyles.caption, { flex: 1, marginRight: theme.spacing.md }]}>{label}</Text>
+      <Text style={[globalStyles.body, { flex: 1, textAlign: 'right' }, valueStyle]}>{value}</Text>
     </View>
   );
 }
