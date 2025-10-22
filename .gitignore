@@ -2,12 +2,25 @@
 
 # dependencies
 node_modules/
+npm-debug.*
+*.tar.gz
+*.orig
 
 # Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+
+# Firebase (IMPORTANTE - no subir credenciales)
+firebase-config.js
+firebase-credentials.json
+google-services.json
+GoogleService-Info.plist
+
+# Logs
+logs
+*.log
 
 # Native
 .kotlin/
@@ -30,6 +43,35 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# iOS
+ios/build/
+*.ipa
+*.xcarchive
+
 # local env files
 .env*.local
 
@@ -39,3 +81,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
+*.aab

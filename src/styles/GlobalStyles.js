@@ -1,0 +1,82 @@
+import { StyleSheet } from 'react-native';
+import theme from './themes';
+
+export const globalStyles = StyleSheet.create({
+  // Contenedores
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  containerPadding: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.md,
+  },
+  
+  // Textos
+  title: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.fontSize.xxl,
+    color: theme.colors.text,
+    lineHeight: theme.typography.lineHeight.xxl,
+  },
+  subtitle: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.xl,
+    color: theme.colors.text,
+    lineHeight: theme.typography.lineHeight.xl,
+  },
+  body: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text,
+    lineHeight: theme.typography.lineHeight.md,
+  },
+  caption: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: theme.typography.lineHeight.sm,
+  },
+  
+  // Botones
+  button: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonPrimary: {
+    backgroundColor: theme.colors.primary,
+  },
+  buttonSecondary: {
+    backgroundColor: theme.colors.secondary,
+  },
+  buttonText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.onPrimary,
+  },
+  
+  // Tarjetas
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  
+  // Inputs
+  input: {
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text,
+  },
+});
+
+export default globalStyles;
