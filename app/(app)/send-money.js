@@ -5,7 +5,6 @@ import {
   TextInput, 
   TouchableOpacity, 
   ScrollView, 
-  Alert, 
   ActivityIndicator, 
   StyleSheet 
 } from 'react-native';
@@ -13,7 +12,9 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
-
+import * as yup from 'yup';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 // 1. Hooks de la App
 import useSafeArea from '../../src/hooks/useSafeArea';
 import { useGlobalStyles } from '../../src/hooks/useGlobalStyles'; // 👈 Dinámico
@@ -22,6 +23,14 @@ import useTheme from '../../src/hooks/useTheme'; // 👈 Dinámico
 // 2. Firebase
 import { getCurrentUser } from '../../src/services/firebase/auth';
 import { findUserByPhone, sendMoney, listenToUser } from '../../src/services/firebase/firestore';
+
+const searchSchema = yup.object().shape({
+  telefono: yup
+    .string()
+    .matches(/^[0-9]+$/, 'Solo números')
+    .min(9, 'Teléfono no válido (mín. 9 dígitos)')
+    .required('El teléfono es requerido'),
+});
 
 export default function SendMoney() {
   // 3. Hooks
@@ -39,6 +48,22 @@ export default function SendMoney() {
   const [sending, setSending] = useState(false);
   const [userData, setUserData] = useState(null);
 
+  const sendSchema = useMemo(() => {
+    const saldoActual = userData?.saldo || 0; 
+    
+    return yup.object().shape({
+      monto: yup
+        .number()
+        .typeError('Debe ser un monto válido') // Si escriben "abc"
+        .positive('El monto debe ser positivo')
+        .max(saldoActual, `Saldo insuficiente (Tienes S/ ${saldoActual.toFixed(2)})`)
+        .required('El monto es requerido'),
+      descripcion: yup
+        .string()
+        .max(100, 'Máximo 100 caracteres'),
+    });
+  }, [userData]);
+
   // 5. Lógica (sin cambios)
   useEffect(() => {
     const user = getCurrentUser();
@@ -48,59 +73,70 @@ export default function SendMoney() {
     }
   }, []);
 
-  const searchUser = async () => {
-    if (!phoneNumber || phoneNumber.length < 9) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Ingresa un número de teléfono válido' });
-      return;
-    }
+  const { 
+    control: controlSearch, 
+    handleSubmit: handleSubmitSearch, 
+    formState: { errors: errorsSearch } 
+  } = useForm({
+    resolver: yupResolver(searchSchema),
+    mode: 'onBlur',
+  });
+
+  // ✅ FORMULARIO 2: Para enviar monto
+  const { 
+    control: controlSend, 
+    handleSubmit: handleSubmitSend, 
+    formState: { errors: errorsSend },
+    watch: watchSend // 👈 Usaremos 'watch' para el botón
+  } = useForm({
+    resolver: yupResolver(sendSchema),
+    mode: 'onChange', // 'onChange' es mejor para montos
+  });
+
+  const montoActual = watchSend('monto');
+
+  const onSearchSubmit = async (data) => {
+    // 'data' es { telefono: '...' }
     setSearching(true);
+    setFoundUser(null); // Resetea si busca de nuevo
     try {
-      const user = await findUserByPhone(phoneNumber);
+      const user = await findUserByPhone(data.telefono);
       setFoundUser(user);
       if (!user) {
-        Toast.show({ type: 'error', text1: 'Usuario no encontrado', text2: 'Verifica el número de teléfono' });
+        Toast.show({ type: 'error', text1: 'Usuario no encontrado' });
       }
+      // Si se encuentra, el 'if (foundUser)' en el JSX mostrará el Formulario 2
     } catch (error) {
-      Alert.alert('Error', 'No se pudo buscar el usuario');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo buscar el usuario' });
     } finally {
       setSearching(false);
     }
   };
 
-  const handleSendMoney = async () => {
-    // ... (Tu lógica de validación y envío es perfecta, sin cambios)
-    const user = getCurrentUser();
-    if (!user || !foundUser) return;
-    const numericAmount = parseFloat(amount);
-    if (!numericAmount || numericAmount <= 0) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Ingresa un monto válido' });
-      return;
-    }
-    if (userData?.saldo < numericAmount) {
-      Toast.show({ type: 'error', text1: 'Saldo insuficiente', text2: `Tu saldo es S/ ${userData.saldo.toFixed(2)}` });
-      return;
-    }
+  const onSendSubmit = async (data) => {
+    // 'data' es { monto: 123, descripcion: '...' }
+    // Ya no necesitas validar el saldo, Yup lo hizo
     setSending(true);
-    try {
-      await sendMoney(
-        user.uid, 
-        phoneNumber, 
-        numericAmount, 
-        description || 'Transferencia'
-      );
-      Toast.show({
-        type: 'success',
-        text1: 'Transferencia Exitosa',
-        text2: `Enviaste S/ ${numericAmount.toFixed(2)} a ${foundUser.nombre}`,
-        onHide: () => router.back() // <-- Navega cuando el toast desaparece
+    try {
+      await sendMoney(
+        getCurrentUser().uid, 
+        foundUser.telefono, // 👈 Usamos el 'foundUser' del estado
+        data.monto, 
+        data.descripcion || 'Transferencia'
+      );
+      Toast.show({ 
+        type: 'success', 
+        text1: 'Transferencia exitosa',
+        onHide: () => router.back()
       });
-    } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error de Transferencia', text2: error.message });
-    } finally {
-      setSending(false);
-    }
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Error al enviar', text2: error.message });
+    } finally {
+      setSending(false);
+    }
   };
 
+  
   // 6. Estilos locales dinámicos
   const localStyles = useMemo(() => StyleSheet.create({
     scrollContainer: {
@@ -157,6 +193,7 @@ export default function SendMoney() {
       fontSize: theme.typography.fontSize.md,
       color: theme.colors.text,
       paddingVertical: theme.spacing.sm,
+      color: theme.colors.text,
     },
     // Botón de Gradiente
     gradientButton: {
@@ -190,6 +227,14 @@ export default function SendMoney() {
     foundUserPhone: {
       ...globalStyles.caption,
     },
+    errorText: {
+      color: theme.colors.error,
+      fontFamily: theme.typography.fontFamily.regular,
+      fontSize: theme.typography.fontSize.sm,
+      marginTop: theme.spacing.xs,
+      marginLeft: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
   }), [globalStyles, theme]);
   
   return (
@@ -221,29 +266,42 @@ export default function SendMoney() {
             1. Buscar Usuario
           </Text>
           
-          <View style={localStyles.inputWrapper}>
+        <View style={localStyles.inputWrapper}>
             <MaterialCommunityIcons name="phone" size={20} style={localStyles.inputIcon} />
-            <TextInput
-              style={localStyles.inputField}
-              placeholder="Número de teléfono"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              editable={!searching && !sending}
+            
+            {/* ✅ Controlador para 'telefono' */}
+            <Controller
+              control={controlSearch}
+              name="telefono"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={localStyles.inputField}
+                  placeholder="Número de teléfono"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  keyboardType="phone-pad"
+                  editable={!searching && !sending}
+                />
+              )}
             />
           </View>
+          {/* ✅ Muestra error de 'telefono' */}
+          {errorsSearch.telefono && (
+            <Text style={localStyles.errorText}>{errorsSearch.telefono.message}</Text>
+          )}
 
           <TouchableOpacity 
-            onPress={searchUser}
-            disabled={searching || !phoneNumber}
+            // ✅ Usa el 'handleSubmit' del Formulario 1
+            onPress={handleSubmitSearch(onSearchSubmit)}
+            disabled={searching}
           >
             <LinearGradient
               colors={[theme.colors.primaryLight, theme.colors.primary]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={[
                 localStyles.gradientButton,
-                (searching || !phoneNumber) && globalStyles.buttonDisabled
+                searching && globalStyles.buttonDisabled
               ]}
             >
               {searching ? (
@@ -274,53 +332,80 @@ export default function SendMoney() {
 
         {/* Detalles de transferencia (solo si se encontró usuario) */}
         {foundUser && (
-          <View style={localStyles.sectionCard}>
+          <View style={[localStyles.sectionCard]}>
             <Text style={localStyles.sectionTitle}>
               2. Detalles de Transferencia
             </Text>
             
+            {/* ✅ Controlador para 'monto' */}
             <View style={localStyles.inputWrapper}>
               <MaterialCommunityIcons name="cash" size={20} style={localStyles.inputIcon} />
-              <TextInput
-                style={localStyles.inputField}
-                placeholder="Monto (S/)"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType="decimal-pad"
-                editable={!sending}
+              <Controller
+                control={controlSend}
+                name="monto"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={localStyles.inputField}
+                    placeholder="Monto (S/)"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    onBlur={onBlur}
+                    // 'onChange' espera un string, 'value' es un número
+                    onChangeText={onChange} 
+                    value={value?.toString()} // 
+                    keyboardType="decimal-pad"
+                    editable={!sending}
+                  />
+                )}
               />
             </View>
+            {/* ✅ Muestra error de 'monto' */}
+            {errorsSend.monto && (
+              <Text style={localStyles.errorText}>{errorsSend.monto.message}</Text>
+            )}
 
-            <View style={localStyles.inputWrapper}>
+            {/* ✅ Controlador para 'descripcion' */}
+            <View style={[localStyles.inputWrapper, { marginTop: theme.spacing.sm }]}>
               <MaterialCommunityIcons name="text-short" size={20} style={localStyles.inputIcon} />
-              <TextInput
-                style={localStyles.inputField}
-                placeholder="Descripción (opcional)"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={description}
-                onChangeText={setDescription}
-                editable={!sending}
+              <Controller
+                control={controlSend}
+                name="descripcion"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={localStyles.inputField}
+                    placeholder="Descripción (opcional)"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value || ''}
+                    editable={!sending}
+                  />
+                )}
               />
             </View>
+            {/* ✅ Muestra error de 'descripcion' */}
+            {errorsSend.descripcion && (
+              <Text style={localStyles.errorText}>{errorsSend.descripcion.message}</Text>
+            )}
 
             <TouchableOpacity 
-              onPress={handleSendMoney}
-              disabled={sending || !amount || parseFloat(amount) <= 0}
+              // ✅ Usa el 'handleSubmit' del Formulario 2
+              onPress={handleSubmitSend(onSendSubmit)}
+              disabled={sending}
+              style={{ marginTop: theme.spacing.md }}
             >
               <LinearGradient
                 colors={[theme.colors.primaryLight, theme.colors.primary]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={[
                   localStyles.gradientButton,
-                  (sending || !amount || parseFloat(amount) <= 0) && globalStyles.buttonDisabled
+                  sending && globalStyles.buttonDisabled
                 ]}
               >
                 {sending ? (
                   <ActivityIndicator size="small" color={theme.colors.onPrimary} />
                 ) : (
                   <Text style={globalStyles.buttonText}>
-                    Enviar S/ {amount || '0.00'}
+                    {/* ✅ Usa el valor de 'watch' */}
+                    Enviar S/ {montoActual || '0.00'}
                   </Text>
                 )}
               </LinearGradient>

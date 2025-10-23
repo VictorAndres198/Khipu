@@ -4,7 +4,6 @@ import {
   Text, 
   TextInput, 
   TouchableOpacity, 
-  Alert, 
   ScrollView, 
   ActivityIndicator, 
   StyleSheet 
@@ -12,6 +11,10 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import Toast from 'react-native-toast-message';
 
 // 1. Hooks de la app
@@ -22,6 +25,31 @@ import useTheme from '../src/hooks/useTheme'; // 👈 Hook de tema
 // 2. Lógica de Firebase (sin cambios)
 import { register, onAuthChange, getCurrentUser } from '../src/services/firebase/auth';
 
+const registerSchema = yup.object().shape({
+  nombre: yup
+    .string()
+    .required('Tu nombre es requerido'),
+  telefono: yup
+    .string()
+    .matches(/^[0-9]+$/, 'Solo debe contener números')
+    .min(9, 'Debe ser un teléfono válido')
+    .required('El teléfono es requerido'),
+  email: yup
+    .string()
+    .email('Por favor, ingresa un email válido')
+    .required('El email es requerido'),
+  password: yup
+    .string()
+    .min(6, 'La contraseña debe tener al menos 6 caracteres')
+    .required('La contraseña es requerida'),
+  
+  // (OPCIONAL: Si quieres añadir un campo "Confirmar Contraseña")
+  // passwordConfirm: yup
+  //   .string()
+  //   .oneOf([yup.ref('password'), null], 'Las contraseñas no coinciden')
+  //   .required('Confirma tu contraseña'),
+});
+
 export default function Register() {
   const { safeAreaInsets } = useSafeArea(false);
   const router = useRouter();
@@ -31,15 +59,19 @@ export default function Register() {
   const { theme } = useTheme();
 
   // 4. Estado local
-  const [formData, setFormData] = useState({
-    nombre: '',
-    telefono: '',
-    email: '',
-    password: ''
-  });
   const [loading, setLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // 👈 Para mostrar/ocultar contraseña
+
+
+const { 
+    control, // Conecta los inputs
+    handleSubmit, // Maneja el envío
+    formState: { errors } // Objeto con los mensajes de error
+  } = useForm({
+    resolver: yupResolver(registerSchema),
+    mode: 'onBlur', // Valida cuando el usuario sale del input
+  });
 
   // 5. Lógica de autenticación (sin cambios)
   useFocusEffect(() => {
@@ -54,22 +86,19 @@ export default function Register() {
     return unsubscribe;
   });
 
-  const handleRegister = async () => {
-    // (Tu lógica de handleRegister... la dejo igual)
-    const { nombre, telefono, email, password } = formData;
-    if (!nombre || !telefono || !email || !password) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Por favor completa todos los campos' });
-      return;
-    }
+  const onSubmit = async (data) => {
     setLoading(true);
-    try {
-      await register(email, password, { nombre, telefono });
-      Toast.show({ type: 'success', text1: '¡Cuenta creada!', text2: 'Bienvenido a Khipu' });
-    } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error de inicio de sesión', text2: error.message });
-    } finally {
-      setLoading(false);
-    }
+    try {
+      await register(data.email, data.password, { 
+        nombre: data.nombre, 
+        telefono: data.telefono 
+      });
+      Toast.show({ type: 'success', text1: '¡Cuenta creada!' });
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Error al crear cuenta', text2: error.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateField = (field, value) => {
@@ -115,6 +144,16 @@ export default function Register() {
       fontSize: theme.typography.fontSize.md,
       color: theme.colors.text,
       paddingVertical: theme.spacing.sm,
+      color: theme.colors.text,
+    },
+    // Estilo para el texto de error
+    errorText: {
+      color: theme.colors.error,
+      fontFamily: theme.typography.fontFamily.regular,
+      fontSize: theme.typography.fontSize.sm,
+      marginTop: theme.spacing.xs,
+      marginLeft: theme.spacing.sm,
+      marginBottom: theme.spacing.sm, // Espacio antes del siguiente input
     },
     passwordToggleIcon: {
       padding: theme.spacing.sm,
@@ -174,103 +213,134 @@ export default function Register() {
 
         {/* Formulario */}
         <View style={localStyles.formContainer}>
-          {/* 7. Inputs con Iconos */}
-          <View style={localStyles.inputWrapper}>
-            <MaterialCommunityIcons 
-              name="account-outline" 
-              size={20} 
-              style={localStyles.inputIcon} 
-            />
-            <TextInput
-              style={localStyles.inputField}
-              placeholder="Nombre completo"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.nombre}
-              onChangeText={(value) => updateField('nombre', value)}
-              editable={!loading}
-            />
-          </View>
-          
-          <View style={localStyles.inputWrapper}>
-            <MaterialCommunityIcons 
-              name="phone-outline" 
-              size={20} 
-              style={localStyles.inputIcon} 
-            />
-            <TextInput
-              style={localStyles.inputField}
-              placeholder="Teléfono"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.telefono}
-              onChangeText={(value) => updateField('telefono', value)}
-              keyboardType="phone-pad"
-              editable={!loading}
-            />
-          </View>
-
-          <View style={localStyles.inputWrapper}>
-            <MaterialCommunityIcons 
-              name="email-outline" 
-              size={20} 
-              style={localStyles.inputIcon} 
-            />
-            <TextInput
-              style={localStyles.inputField}
-              placeholder="Email"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.email}
-              onChangeText={(value) => updateField('email', value)}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
-          </View>
-
-          <View style={localStyles.inputWrapper}>
-            <MaterialCommunityIcons 
-              name="lock-outline" 
-              size={20} 
-              style={localStyles.inputIcon} 
-            />
-            <TextInput
-              style={localStyles.inputField}
-              placeholder="Contraseña"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={formData.password}
-              onChangeText={(value) => updateField('password', value)}
-              secureTextEntry={!isPasswordVisible}
-              editable={!loading}
-            />
-            <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-              <MaterialCommunityIcons 
-                name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'} 
-                size={22} 
-                style={localStyles.passwordToggleIcon} 
+{/* 1. Input de Nombre */}
+        <View style={localStyles.inputWrapper}>
+          <MaterialCommunityIcons name="account-outline" size={20} style={localStyles.inputIcon} />
+          <Controller
+            control={control}
+            name="nombre" // 👈 Coincide con registerSchema
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                style={localStyles.inputField}
+                placeholder="Nombre completo"
+                placeholderTextColor={theme.colors.textSecondary}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                autoCapitalize="words" // 👈 Mejor para nombres
+                editable={!loading}
               />
-            </TouchableOpacity>
-          </View>
+            )}
+          />
+        </View>
+        {/* Muestra el error de 'nombre' si existe */}
+        {errors.nombre && (
+          <Text style={localStyles.errorText}>{errors.nombre.message}</Text>
+        )}
 
-          {/* 8. Botón Primario con Gradiente */}
-          <TouchableOpacity 
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            <LinearGradient
-              colors={[theme.colors.primaryLight, theme.colors.primary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                localStyles.primaryButtonGradient, 
-                loading && globalStyles.buttonDisabled
-              ]}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.colors.onPrimary} />
-              ) : (
-                <Text style={globalStyles.buttonText}>Crear Cuenta</Text>
-              )}
-            </LinearGradient>
+        {/* 2. Input de Teléfono */}
+        <View style={[localStyles.inputWrapper, { marginTop: theme.spacing.sm }]}>
+          <MaterialCommunityIcons name="phone-outline" size={20} style={localStyles.inputIcon} />
+          <Controller
+            control={control}
+            name="telefono" // 👈 Coincide con registerSchema
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                style={localStyles.inputField}
+                placeholder="Teléfono"
+                placeholderTextColor={theme.colors.textSecondary}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                keyboardType="phone-pad" // 👈 Teclado numérico
+                editable={!loading}
+              />
+            )}
+          />
+        </View>
+        {/* Muestra el error de 'telefono' si existe */}
+        {errors.telefono && (
+          <Text style={localStyles.errorText}>{errors.telefono.message}</Text>
+        )}
+
+        {/* 3. Input de Email */}
+        <View style={[localStyles.inputWrapper, { marginTop: theme.spacing.sm }]}>
+          <MaterialCommunityIcons name="email-outline" size={20} style={localStyles.inputIcon} />
+          <Controller
+            control={control}
+            name="email" // 👈 Coincide con registerSchema
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                style={localStyles.inputField}
+                placeholder="Email"
+                placeholderTextColor={theme.colors.textSecondary}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                editable={!loading}
+              />
+            )}
+          />
+        </View>
+        {/* Muestra el error de 'email' si existe */}
+        {errors.email && (
+          <Text style={localStyles.errorText}>{errors.email.message}</Text>
+        )}
+
+        {/* 4. Input de Contraseña */}
+        <View style={[localStyles.inputWrapper, { marginTop: theme.spacing.sm }]}>
+          <MaterialCommunityIcons name="lock-outline" size={20} style={localStyles.inputIcon} />
+          <Controller
+            control={control}
+            name="password" // 👈 Coincide con registerSchema
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                style={localStyles.inputField}
+                placeholder="Contraseña"
+                placeholderTextColor={theme.colors.textSecondary}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                secureTextEntry={!isPasswordVisible}
+                editable={!loading}
+              />
+            )}
+          />
+          <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+            <MaterialCommunityIcons 
+              name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'} 
+              size={22} 
+              style={localStyles.passwordToggleIcon} 
+            />
           </TouchableOpacity>
+        </View>
+        {/* Muestra el error de 'password' si existe */}
+        {errors.password && (
+          <Text style={localStyles.errorText}>{errors.password.message}</Text>
+        )}
+
+        {/* 5. Botón de Envío */}
+        <TouchableOpacity 
+          onPress={handleSubmit(onSubmit)} // 👈 Llama a tu función de Register
+          disabled={loading}
+          style={{ marginTop: theme.spacing.md }} // 👈 Espacio antes del botón
+        >
+          <LinearGradient
+            colors={[theme.colors.primaryLight, theme.colors.primary]}
+            style={[
+              localStyles.primaryButtonGradient,
+              loading && globalStyles.buttonDisabled
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={theme.colors.onPrimary} />
+            ) : (
+              <Text style={globalStyles.buttonText}>Crear Cuenta</Text> // 👈 Texto cambiado
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
 
           {/* 9. Botón Secundario */}
           <TouchableOpacity 
