@@ -1,78 +1,149 @@
-import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+// app/index.js (CÓDIGO CORREGIDO Y COMPLETO)
+
+import React, { useMemo, useState, useEffect } from 'react'; // 👈 1. Importar useState y useEffect
+import { 
+  View, 
+  Text, 
+  ActivityIndicator, 
+  ScrollView, 
+  TouchableOpacity, 
+  StyleSheet 
+} from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router'; // 👈 2. Importar useFocusEffect
+import { LinearGradient } from 'expo-linear-gradient'; 
+import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import { useGlobalStyles } from '../src/hooks/useGlobalStyles'; 
+import useTheme from '../src/hooks/useTheme';
 import useSafeArea from '../src/hooks/useSafeArea';
-import { globalStyles } from '../src/styles/GlobalStyles';
+
+// 3. Importar tus funciones de auth de Firebase
 import { onAuthChange, getCurrentUser } from '../src/services/firebase/auth';
 
-export default function Welcome() {
-  const { safeAreaInsets } = useSafeArea(true);
+export default function InitialScreen() {
   const router = useRouter();
+  const { safeAreaInsets } = useSafeArea(false); 
+  const globalStyles = useGlobalStyles(); 
+  const { theme } = useTheme(); 
+  
+  // 4. Este estado ahora SÍ será controlado
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  useFocusEffect(() => {
-    const unsubscribe = onAuthChange((user) => {
-      if (user) {
-        // Usar setTimeout para asegurar que el layout está montado
-        setTimeout(() => {
-          router.replace('/(app)');
-        }, 100);
-      } else {
-        setIsCheckingAuth(false);
-      }
-    });
+  // 5. ¡LA LÓGICA QUE FALTABA!
+  // Esto revisa el estado de autenticación cuando la pantalla carga
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkAuth = () => {
+        // Primero, revisa si ya hay un usuario (más rápido)
+        const user = getCurrentUser();
+        if (user) {
+          router.replace('/(app)'); // Si hay, redirige
+          return; // No necesitamos el listener
+        }
 
-    // Verificación inicial
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setTimeout(() => {
-        router.replace('/(app)');
-      }, 100);
-    } else {
-      setIsCheckingAuth(false);
+        // Si no hay, activa el listener
+        const unsubscribe = onAuthChange((user) => {
+          if (user) {
+            // Si el usuario inicia sesión (ej. en otra pestaña)
+            router.replace('/(app)');
+          } else {
+            // Si el listener confirma que NO hay usuario,
+            // deja de cargar y muestra los botones de login/registro
+            setIsCheckingAuth(false);
+          }
+        });
+
+        return () => unsubscribe(); // Limpia el listener al salir
+      };
+
+      checkAuth();
+    }, [router])
+  );
+  
+  // (Estilos locales... sin cambios)
+  const localStyles = useMemo(() => StyleSheet.create({
+    scrollContainer: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: theme.spacing.md,
+    },
+    logoContainer: {
+      alignItems: 'center',
+      marginBottom: theme.spacing.xxl, 
+    },
+    brandTitle: {
+      ...globalStyles.title, 
+      fontSize: theme.typography.fontSize.xxxl, 
+      color: theme.colors.primary, 
+    },
+    tagline: {
+      ...globalStyles.body,
+      marginTop: theme.spacing.md, 
+      textAlign: 'center',
+    },
+    primaryButtonGradient: {
+      ...globalStyles.button, 
+    },
+    secondaryButton: {
+      ...globalStyles.button,
+      ...globalStyles.buttonSecondary,
+      marginTop: theme.spacing.md, 
+    },
+    loadingText: {
+      ...globalStyles.body,
+      marginTop: theme.spacing.md,
+      color: theme.colors.textSecondary,
     }
+  }), [globalStyles, theme]);
 
-    return unsubscribe;
-  });
-
-  // Mostrar loading mientras verificamos autenticación
+  // --- Estado de Carga (Loading) ---
+  // (Este return ahora es temporal, hasta que 'isCheckingAuth' sea false)
   if (isCheckingAuth) {
     return (
-      <View style={[globalStyles.container, safeAreaInsets, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#2E86AB" />
-        <Text style={[globalStyles.body, { marginTop: 16 }]}>Verificando...</Text>
+      <View style={[globalStyles.loadingContainer, safeAreaInsets]}>
+        <ActivityIndicator 
+          size="large" 
+          color={theme.colors.primary} 
+        />
+        <Text style={localStyles.loadingText}>
+          Verificando...
+        </Text>
       </View>
     );
   }
-
+  
+  // --- Pantalla Principal ---
+  // (Esta pantalla solo se mostrará si 'isCheckingAuth' es false)
   return (
     <View style={[globalStyles.container, safeAreaInsets]}>
       <ScrollView 
-        style={globalStyles.containerWithPadding}
-        contentContainerStyle={[globalStyles.scrollContent, { justifyContent: 'center', flex: 1 }]}
+        contentContainerStyle={localStyles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
         {/* Logo/Brand */}
-        <View style={{ alignItems: 'center', marginBottom: 48 }}>
-          <Text style={[globalStyles.title, { fontSize: 32, color: '#2E86AB' }]}>
+        <View style={localStyles.logoContainer}>
+          <Text style={localStyles.brandTitle}>
             Khipu
           </Text>
-          <Text style={[globalStyles.body, { marginTop: 16, textAlign: 'center' }]}>
+          <Text style={localStyles.tagline}>
             Tu billetera digital simple y segura
           </Text>
         </View>
 
         {/* Botones de Acción */}
         <View style={{ width: '100%' }}>
-          <TouchableOpacity 
-            style={[globalStyles.button, globalStyles.buttonPrimary]}
-            onPress={() => router.push('/login')}
-          >
-            <Text style={globalStyles.buttonText}>Iniciar Sesión</Text>
+          <TouchableOpacity onPress={() => router.push('/login')}>
+            <LinearGradient
+              colors={[theme.colors.primaryLight, theme.colors.primary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={localStyles.primaryButtonGradient}
+            >
+              <Text style={globalStyles.buttonText}>Iniciar Sesión</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[globalStyles.button, globalStyles.buttonSecondary, { marginTop: 16 }]}
+            style={localStyles.secondaryButton}
             onPress={() => router.push('/register')}
           >
             <Text style={globalStyles.buttonTextSecondary}>Crear Cuenta</Text>

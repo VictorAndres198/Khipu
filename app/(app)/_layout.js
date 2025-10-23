@@ -1,36 +1,39 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
-import { onAuthChange, getCurrentUser } from '../../src/services/firebase/auth';
-import { ActivityIndicator, View } from 'react-native';
-import { globalStyles } from '../../src/styles/GlobalStyles';
+// app/(app)/_layout.js (EL NUEVO LAYOUT STACK)
+import { Stack } from 'expo-router';
+import useTheme from '../../src/hooks/useTheme';
 
 export default function AppLayout() {
-  const router = useRouter();
-  const segments = useSegments();
-
-  useEffect(() => {
-    const unsubscribe = onAuthChange((user) => {
-      // Si no hay usuario autenticado y estamos en una ruta de la app, redirigir al login
-      if (!user && segments[0] === '(app)') {
-        router.replace('/login');
-      }
-    });
-
-    // Verificación inicial
-    const currentUser = getCurrentUser();
-    if (!currentUser && segments[0] === '(app)') {
-      router.replace('/login');
-    }
-
-    return unsubscribe;
-  }, [segments]);
+  const { theme } = useTheme(); // 1. Obtenemos el tema dinámico
 
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right',
+        // 2. ¡LA SOLUCIÓN AL FLASH BLANCO!
+        // Fija el color de fondo del navegador
+        contentStyle: {
+          backgroundColor: theme.colors.background
+        },
+        
+        // 3. Ocultamos el header de este Stack
+        // (Tus pantallas tienen sus propios headers)
+        headerShown: false, 
       }}
-    />
+    >
+      {/* 4. Apunta a la carpeta (tabs) como la ruta principal */}
+      <Stack.Screen
+        name="(tabs)"
+      />
+      
+      {/* 5. Define las otras pantallas (las que NO tienen tab bar) */}
+      <Stack.Screen
+        name="send-money" // (app)/send-money.js
+      />
+      <Stack.Screen
+        name="transactions/index" // (app)/transactions/index.js
+      />
+      <Stack.Screen
+        name="transactions/[id]" // (app)/transactions/[id].js
+      />
+    </Stack>
   );
 }

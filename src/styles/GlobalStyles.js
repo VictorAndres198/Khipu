@@ -1,7 +1,9 @@
 import { StyleSheet } from 'react-native';
-import theme from './themes';
 
-export const globalStyles = StyleSheet.create({
+
+export const createGlobalStyles = (theme) => {
+  // Recibimos 'theme' como argumento
+  return StyleSheet.create({
   // *Contenedores
   container: {
     flex: 1,
@@ -135,19 +137,18 @@ center: {
 
 // Para el estado de carga
 loadingContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background, // ✅ ¡SOLUCIÓN!
+  },
 
 // Para distribución de elementos
 row: {
-  flexDirection: 'row',
-},
-
-spaceBetween: {
-  justifyContent: 'space-between',
-},
-});
-
-export default globalStyles;
+      flexDirection: 'row',
+    },
+    spaceBetween: {
+      justifyContent: 'space-between',
+    },
+  });
+};

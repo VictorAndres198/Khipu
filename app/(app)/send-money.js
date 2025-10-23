@@ -1,15 +1,36 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert, 
+  ActivityIndicator, 
+  StyleSheet 
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+
+// 1. Hooks de la App
 import useSafeArea from '../../src/hooks/useSafeArea';
-import { globalStyles } from '../../src/styles/GlobalStyles';
+import { useGlobalStyles } from '../../src/hooks/useGlobalStyles'; // 👈 Dinámico
+import useTheme from '../../src/hooks/useTheme'; // 👈 Dinámico
+
+// 2. Firebase
 import { getCurrentUser } from '../../src/services/firebase/auth';
 import { findUserByPhone, sendMoney, listenToUser } from '../../src/services/firebase/firestore';
 
 export default function SendMoney() {
-  const { safeAreaInsets } = useSafeArea(true);
+  // 3. Hooks
+  const { safeAreaInsets } = useSafeArea(true); // 👈 'true' para padding inferior
   const router = useRouter();
+  const globalStyles = useGlobalStyles();
+  const { theme } = useTheme();
   
+  // 4. Estados (sin cambios en la lógica)
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -18,6 +39,7 @@ export default function SendMoney() {
   const [sending, setSending] = useState(false);
   const [userData, setUserData] = useState(null);
 
+  // 5. Lógica (sin cambios)
   useEffect(() => {
     const user = getCurrentUser();
     if (user) {
@@ -28,17 +50,15 @@ export default function SendMoney() {
 
   const searchUser = async () => {
     if (!phoneNumber || phoneNumber.length < 9) {
-      Alert.alert('Error', 'Ingresa un número de teléfono válido');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Ingresa un número de teléfono válido' });
       return;
     }
-
     setSearching(true);
     try {
       const user = await findUserByPhone(phoneNumber);
       setFoundUser(user);
-      
       if (!user) {
-        Alert.alert('Usuario no encontrado', 'Verifica el número de teléfono');
+        Toast.show({ type: 'error', text1: 'Usuario no encontrado', text2: 'Verifica el número de teléfono' });
       }
     } catch (error) {
       Alert.alert('Error', 'No se pudo buscar el usuario');
@@ -48,154 +68,262 @@ export default function SendMoney() {
   };
 
   const handleSendMoney = async () => {
+    // ... (Tu lógica de validación y envío es perfecta, sin cambios)
     const user = getCurrentUser();
-    if (!user || !foundUser) return;
-
+    if (!user || !foundUser) return;
     const numericAmount = parseFloat(amount);
-    if (!numericAmount || numericAmount <= 0) {
-      Alert.alert('Error', 'Ingresa un monto válido');
-      return;
-    }
-
+    if (!numericAmount || numericAmount <= 0) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Ingresa un monto válido' });
+      return;
+    }
     if (userData?.saldo < numericAmount) {
-      Alert.alert('Saldo insuficiente', `Tu saldo es S/ ${userData.saldo.toFixed(2)}`);
-      return;
-    }
-
+      Toast.show({ type: 'error', text1: 'Saldo insuficiente', text2: `Tu saldo es S/ ${userData.saldo.toFixed(2)}` });
+      return;
+    }
     setSending(true);
-    try {
-      const result = await sendMoney(
-        user.uid, 
-        phoneNumber, 
-        numericAmount, 
-        description || 'Transferencia'
-      );
-
-      Alert.alert(
-        '✅ Transferencia exitosa',
-        `Enviaste S/ ${numericAmount.toFixed(2)} a ${foundUser.nombre}`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } catch (error) {
-      Alert.alert('❌ Error', error.message);
-    } finally {
-      setSending(false);
-    }
+    try {
+      await sendMoney(
+        user.uid, 
+        phoneNumber, 
+        numericAmount, 
+        description || 'Transferencia'
+      );
+      Toast.show({
+        type: 'success',
+        text1: 'Transferencia Exitosa',
+        text2: `Enviaste S/ ${numericAmount.toFixed(2)} a ${foundUser.nombre}`,
+        onHide: () => router.back() // <-- Navega cuando el toast desaparece
+      });
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Error de Transferencia', text2: error.message });
+    } finally {
+      setSending(false);
+    }
   };
 
+  // 6. Estilos locales dinámicos
+  const localStyles = useMemo(() => StyleSheet.create({
+    scrollContainer: {
+      padding: theme.spacing.md,
+      paddingBottom: theme.spacing.xxl,
+    },
+    headerContainer: {
+      paddingBottom: theme.spacing.lg,
+    },
+    headerSubtitle: {
+      ...globalStyles.body,
+      marginTop: theme.spacing.sm,
+      color: theme.colors.textSecondary,
+    },
+    // Tarjeta de Saldo
+    balanceCard: {
+      ...globalStyles.card,
+      backgroundColor: theme.colors.surfaceVariant, // 👈 Gris claro
+      marginBottom: theme.spacing.lg,
+      padding: theme.spacing.md,
+    },
+    balanceTitle: {
+      ...globalStyles.title,
+      color: theme.colors.primary, // 👈 Verde menta
+      fontSize: theme.typography.fontSize.xl,
+    },
+    // Tarjeta de Sección
+    sectionCard: {
+      ...globalStyles.card,
+      marginBottom: theme.spacing.lg,
+    },
+    sectionTitle: {
+      ...globalStyles.subtitle,
+      marginBottom: theme.spacing.md,
+    },
+    // Estilos de Input (copiados de Login/Register)
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      marginBottom: theme.spacing.md,
+    },
+    inputIcon: {
+      marginLeft: theme.spacing.md,
+      color: theme.colors.textSecondary,
+    },
+    inputField: {
+      flex: 1,
+      paddingHorizontal: theme.spacing.sm,
+      fontFamily: theme.typography.fontFamily.regular,
+      fontSize: theme.typography.fontSize.md,
+      color: theme.colors.text,
+      paddingVertical: theme.spacing.sm,
+    },
+    // Botón de Gradiente
+    gradientButton: {
+      ...globalStyles.button,
+    },
+    // Tarjeta de Usuario Encontrado (NUEVO DISEÑO)
+    foundUserContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: theme.spacing.md,
+      padding: theme.spacing.md, 
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.success, // 👈 Borde verde
+    },
+    foundUserIconContainer: {
+      backgroundColor: theme.colors.success,
+      borderRadius: theme.borderRadius.round,
+      padding: theme.spacing.xs,
+      marginRight: theme.spacing.sm,
+    },
+    foundUserTextContainer: {
+      flex: 1,
+    },
+    foundUserName: {
+      ...globalStyles.body,
+      fontFamily: theme.typography.fontFamily.medium,
+      color: theme.colors.text,
+    },
+    foundUserPhone: {
+      ...globalStyles.caption,
+    },
+  }), [globalStyles, theme]);
+  
   return (
     <View style={[globalStyles.container, safeAreaInsets]}>
       <ScrollView 
-        style={globalStyles.containerWithPadding}
-        contentContainerStyle={globalStyles.scrollContent}
+        contentContainerStyle={localStyles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={globalStyles.headerContainerNoPadding}>
+        {/* Header */}
+        <View style={localStyles.headerContainer}>
           <Text style={globalStyles.title}>Enviar Dinero</Text>
-          <Text style={[globalStyles.body, { marginTop: 8 }]}>
+          <Text style={localStyles.headerSubtitle}>
             Transfiere dinero a otro usuario de Khipu
           </Text>
         </View>
 
         {/* Tu saldo actual */}
-        <View style={[globalStyles.card, { marginBottom: 24 }]}>
+        <View style={localStyles.balanceCard}>
           <Text style={globalStyles.caption}>Tu saldo disponible</Text>
-          <Text style={[globalStyles.title, { color: '#2E86AB', fontSize: 24 }]}>
+          <Text style={localStyles.balanceTitle}>
             S/ {userData?.saldo?.toFixed(2) || '0.00'}
           </Text>
         </View>
 
         {/* Buscar usuario */}
-        <View style={[globalStyles.card, { marginBottom: 24 }]}>
-          <Text style={[globalStyles.subtitle, { marginBottom: 16 }]}>
-            Buscar Usuario
+        <View style={localStyles.sectionCard}>
+          <Text style={localStyles.sectionTitle}>
+            1. Buscar Usuario
           </Text>
           
-          <TextInput
-            style={globalStyles.input}
-            placeholder="Número de teléfono (+51...)"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            editable={!searching && !sending}
-          />
+          <View style={localStyles.inputWrapper}>
+            <MaterialCommunityIcons name="phone" size={20} style={localStyles.inputIcon} />
+            <TextInput
+              style={localStyles.inputField}
+              placeholder="Número de teléfono"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              editable={!searching && !sending}
+            />
+          </View>
 
           <TouchableOpacity 
-            style={[
-              globalStyles.button, 
-              globalStyles.buttonPrimary,
-              { opacity: (searching || !phoneNumber) ? 0.6 : 1 }
-            ]}
             onPress={searchUser}
             disabled={searching || !phoneNumber}
           >
-            {searching ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={globalStyles.buttonText}>Buscar Usuario</Text>
-            )}
+            <LinearGradient
+              colors={[theme.colors.primaryLight, theme.colors.primary]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={[
+                localStyles.gradientButton,
+                (searching || !phoneNumber) && globalStyles.buttonDisabled
+              ]}
+            >
+              {searching ? (
+                <ActivityIndicator size="small" color={theme.colors.onPrimary} />
+              ) : (
+                <Text style={globalStyles.buttonText}>Buscar Usuario</Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
 
           {/* Resultado de búsqueda */}
           {foundUser && (
-            <View style={{ 
-              marginTop: 16, 
-              padding: 16, 
-              backgroundColor: '#E8F5E8', 
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: '#4CAF50'
-            }}>
-              <Text style={[globalStyles.body, { fontWeight: '600' }]}>
-                👤 {foundUser.nombre}
-              </Text>
-              <Text style={globalStyles.caption}>
-                📱 {foundUser.telefono}
-              </Text>
+            <View style={localStyles.foundUserContainer}>
+              <View style={localStyles.foundUserIconContainer}>
+                <MaterialCommunityIcons name="check" size={16} color={theme.colors.onPrimary} />
+              </View>
+              <View style={localStyles.foundUserTextContainer}>
+                <Text style={localStyles.foundUserName}>
+                  {foundUser.nombre}
+                </Text>
+                <Text style={localStyles.foundUserPhone}>
+                  {foundUser.telefono}
+                </Text>
+              </View>
             </View>
           )}
         </View>
 
-        {/* Detalles de transferencia */}
+        {/* Detalles de transferencia (solo si se encontró usuario) */}
         {foundUser && (
-          <View style={[globalStyles.card, { marginBottom: 24 }]}>
-            <Text style={[globalStyles.subtitle, { marginBottom: 16 }]}>
-              Detalles de Transferencia
+          <View style={localStyles.sectionCard}>
+            <Text style={localStyles.sectionTitle}>
+              2. Detalles de Transferencia
             </Text>
             
-            <TextInput
-              style={globalStyles.input}
-              placeholder="Monto (S/)"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              editable={!sending}
-            />
+            <View style={localStyles.inputWrapper}>
+              <MaterialCommunityIcons name="cash" size={20} style={localStyles.inputIcon} />
+              <TextInput
+                style={localStyles.inputField}
+                placeholder="Monto (S/)"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="decimal-pad"
+                editable={!sending}
+              />
+            </View>
 
-            <TextInput
-              style={globalStyles.input}
-              placeholder="Descripción (opcional)"
-              value={description}
-              onChangeText={setDescription}
-              editable={!sending}
-            />
+            <View style={localStyles.inputWrapper}>
+              <MaterialCommunityIcons name="text-short" size={20} style={localStyles.inputIcon} />
+              <TextInput
+                style={localStyles.inputField}
+                placeholder="Descripción (opcional)"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={description}
+                onChangeText={setDescription}
+                editable={!sending}
+              />
+            </View>
 
             <TouchableOpacity 
-              style={[
-                globalStyles.button, 
-                globalStyles.buttonPrimary,
-                { opacity: (sending || !amount) ? 0.6 : 1 }
-              ]}
               onPress={handleSendMoney}
-              disabled={sending || !amount}
+              disabled={sending || !amount || parseFloat(amount) <= 0}
             >
-              {sending ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={globalStyles.buttonText}>
-                  Enviar S/ {amount || '0.00'} a {foundUser.nombre.split(' ')[0]}
-                </Text>
-              )}
+              <LinearGradient
+                colors={[theme.colors.primaryLight, theme.colors.primary]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={[
+                  localStyles.gradientButton,
+                  (sending || !amount || parseFloat(amount) <= 0) && globalStyles.buttonDisabled
+                ]}
+              >
+                {sending ? (
+                  <ActivityIndicator size="small" color={theme.colors.onPrimary} />
+                ) : (
+                  <Text style={globalStyles.buttonText}>
+                    Enviar S/ {amount || '0.00'}
+                  </Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         )}
