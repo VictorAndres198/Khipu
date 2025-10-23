@@ -34,6 +34,22 @@ export default function AppLayout() {
       <Stack.Screen
         name="transactions/[id]" // (app)/transactions/[id].js
       />
+      
+      <Stack.Screen
+        name="my-qr" // apunta a app/(app)/my-qr.js
+        options={{
+          presentation: 'modal', // Se desliza desde abajo
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="scanner" // apunta a app/(app)/scanner.js
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+
     </Stack>
   );
 }

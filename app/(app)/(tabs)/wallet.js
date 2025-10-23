@@ -316,6 +316,14 @@ export default function Wallet() {
               <MaterialCommunityIcons name="arrow-top-right" size={18} color={theme.colors.onSecondary} />
               <Text style={globalStyles.buttonTextSecondary}>Enviar Dinero</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[localStyles.quickActionButton, globalStyles.buttonSecondary]}
+              onPress={() => router.push('/(app)/my-qr')} // 👈 Acción
+            >
+              <MaterialCommunityIcons name="qrcode" size={18} color={theme.colors.onSecondary} />
+              <Text style={globalStyles.buttonTextSecondary}>Recibir con QR</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
