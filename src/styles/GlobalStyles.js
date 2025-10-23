@@ -105,12 +105,49 @@ export const globalStyles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: theme.colors.outline,
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     padding: theme.spacing.sm,
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text,
+    marginBottom: theme.spacing.md,
   },
+
+  buttonTextSecondary: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text,
+  },
+  
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
+
+// Agrega esto a tus globalStyles si no los tienes
+center: {
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+// Para el estado de carga
+loadingContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+// Para distribución de elementos
+row: {
+  flexDirection: 'row',
+},
+
+spaceBetween: {
+  justifyContent: 'space-between',
+},
 });
 
 export default globalStyles;
