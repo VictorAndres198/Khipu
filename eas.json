@@ -17,7 +17,8 @@
       "node": "22.21.0",
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
-      }
+      },
+      "buildType": "apk"
     }
   },
   "submit": {
