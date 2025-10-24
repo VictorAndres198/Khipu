@@ -14,7 +14,9 @@
     },
     "production": {
       "autoIncrement": true,
-      "node": "22.21.0"
+      "node": "22.21.0",
+      "preInstall": "npm config set legacy-peer-deps true",
+      "postInstall": "npm config set legacy-peer-deps false"
     }
   },
   "submit": {
