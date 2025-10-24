@@ -28,7 +28,8 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.vicand.Khipu"
+      "package": "com.vicand.Khipu",
+      "output": "apk"
     },
     "web": {
       "favicon": "./assets/icons/favicon.png"
