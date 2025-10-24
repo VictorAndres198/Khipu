@@ -1,22 +1,32 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuración de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDRoF8HTpuRuB9OeSUvebQYmmzwQJWbv5c",
-  authDomain: "khipu-app-32c60.firebaseapp.com",
-  projectId: "khipu-app-32c60",
-  storageBucket: "khipu-app-32c60.firebasestorage.app",
-  messagingSenderId: "570735434749",
-  appId: "1:570735434749:web:cb9a67216aedfd285ad794",
-  measurementId: "G-EQK3DZEYPG"
+apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  // measurementId es opcional para React Native, pero puedes incluirlo si lo usas
+  // measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
+
+if (!firebaseConfig.apiKey) {
+  console.error("Error: Las variables de entorno de Firebase no están configuradas correctamente. Revisa tu archivo .env y el prefijo EXPO_PUBLIC_");
+}
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
 // ✅ SOLO PARA WEB - Auth sin AsyncStorage
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export default app;
+const db = getFirestore(app);
+
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
+
+export { app, auth, db };
