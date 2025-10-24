@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/icons/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.vicand.Khipu"
     },
     "web": {
       "favicon": "./assets/icons/favicon.png"
@@ -31,6 +32,12 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0b9ccee3-5ffd-4ca1-a39c-61ffdb0a24b4"
+      }
+    }
   }
 }
