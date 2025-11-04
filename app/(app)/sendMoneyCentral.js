@@ -364,9 +364,9 @@ export default function SendMoneyCentral() {
       >
         {/* Header */}
         <View style={localStyles.headerContainer}>
-          <Text style={globalStyles.title}>Enviar a Otras Billeteras</Text>
+          <Text style={globalStyles.title}>Enviar Dinero</Text>
           <Text style={localStyles.headerSubtitle}>
-            Transfiere dinero a usuarios de otras apps.
+            Busca un contacto por su teléfono.
           </Text>
         </View>
 
@@ -385,7 +385,7 @@ export default function SendMoneyCentral() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     style={localStyles.inputField}
-                    placeholder="Teléfono o DNI del destinatario"
+                    placeholder="Teléfono del destinatario"
                     placeholderTextColor={theme.colors.textSecondary}
                     onBlur={onBlur}
                     onChangeText={onChange}
