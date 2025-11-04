@@ -311,7 +311,7 @@ export default function Wallet() {
 
             <TouchableOpacity 
               style={[localStyles.quickActionButton, globalStyles.buttonSecondary]}
-              onPress={() => router.push('/(app)/send-money')}
+              onPress={() => router.push('/(app)/sendMoneyCentral')}
             >
               <MaterialCommunityIcons name="arrow-top-right" size={18} color={theme.colors.onSecondary} />
               <Text style={globalStyles.buttonTextSecondary}>Enviar Dinero</Text>

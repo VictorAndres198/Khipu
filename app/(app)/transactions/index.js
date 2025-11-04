@@ -107,9 +107,37 @@ const TransactionItem = React.memo(({ item, onPress, formatAmount }) => {
       </View>
       
       <View style={itemStyles.detailsContainer}>
-        <Text style={itemStyles.description}>{item.descripcion || 'Transacción'}</Text>
+        
+        {/* --- Lógica para mostrar el Título Correcto --- */}
+        {(() => {
+          // Si es un ENVÍO, muestra el nombre del destinatario
+          if (item.tipo === 'envio') {
+            return (
+              <Text style={itemStyles.description} numberOfLines={1}>
+                Envío a {item.destinatarioNombre || 'Destinatario desconocido'}
+              </Text>
+            );
+          }
+          // Si es una RECEPCIÓN, muestra el nombre del remitente
+          if (item.tipo === 'recepcion') {
+            return (
+              <Text style={itemStyles.description} numberOfLines={1}>
+                Recibido de {item.remitenteNombre || 'Remitente desconocido'}
+              </Text>
+            );
+          }
+          // Si es RECARGA o cualquier otra cosa, muestra la descripción
+          return (
+            <Text style={itemStyles.description} numberOfLines={1}>
+              {item.descripcion || 'Transacción'}
+            </Text>
+          );
+        })()}
+        {/* --- Fin de la Lógica --- */}
+
+        {/* Subtítulo: Muestra la fecha y el tipo (o la app externa) */}
         <Text style={itemStyles.date}>
-          {date} • {getTransactionTypeText(item.tipo)}
+          {date} • {item.destinatarioApp || getTransactionTypeText(item.tipo)}
         </Text>
       </View>
       

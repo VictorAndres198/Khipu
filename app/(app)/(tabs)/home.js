@@ -59,6 +59,15 @@ const getTransactionIcon = (type) => {
   }
 };
 
+const getTransactionTypeText = (type) => {
+  switch (type) {
+    case 'envio': return 'Envío';
+    case 'recepcion': return 'Recepción';
+    case 'recarga': return 'Recarga';
+    default: return 'Transacción';
+  }
+};
+
 export default function Home() {
   const { safeAreaInsets } = useSafeArea(false);
   const router = useRouter();
@@ -266,7 +275,7 @@ export default function Home() {
   }
 
   // --- Pantalla Principal ---
-  return (
+return (
     <View style={[globalStyles.container, safeAreaInsets]}>
       <ScrollView 
         contentContainerStyle={localStyles.scrollContainer}
@@ -305,20 +314,22 @@ export default function Home() {
         {/* Acciones Rápidas (NUEVO DISEÑO) */}
         <View style={localStyles.sectionContainer}>
           <View style={localStyles.quickActionsContainer}>
+          {/* 1. Botón UNIFICADO de Enviar Dinero */}
             <TouchableOpacity 
               style={localStyles.quickActionButton}
-              onPress={() => router.push('/(app)/send-money')}
+              onPress={() => router.push('/(app)/sendMoneyCentral')} // 👈 Apunta a la pantalla inteligente
             >
-              <MaterialCommunityIcons name="arrow-top-right-bold-outline" size={24} color={theme.colors.onSecondary} />
-              <Text style={localStyles.quickActionButtonText}>Enviar</Text>
+              <MaterialCommunityIcons name="bank-transfer-out" size={24} color={theme.colors.onSecondary} /> 
+              <Text style={localStyles.quickActionButtonText}>Enviar Dinero</Text>
             </TouchableOpacity>
             
+            {/* 2. Botón de Recibir (con QR) */}
             <TouchableOpacity 
               style={localStyles.quickActionButton}
-              onPress={() => Alert.alert('Próximamente', 'Funcionalidad de solicitud en desarrollo')}
+              onPress={() => router.push('/(app)/my-qr')} // 👈 Apunta a tu pantalla de QR
             >
-              <MaterialCommunityIcons name="arrow-bottom-left-bold-outline" size={24} color={theme.colors.onSecondary} />
-              <Text style={localStyles.quickActionButtonText}>Solicitar</Text>
+              <MaterialCommunityIcons name="qrcode" size={24} color={theme.colors.onSecondary} />
+              <Text style={localStyles.quickActionButtonText}>Recibir (Mi QR)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -335,6 +346,7 @@ export default function Home() {
           </View>
           
           {transactions.length === 0 ? (
+            // --- ESTADO VACÍO ---
             <View style={localStyles.transactionListEmpty}>
               <MaterialCommunityIcons name="format-list-bulleted" size={32} color={theme.colors.textSecondary} />
               <Text style={[globalStyles.body, { marginTop: theme.spacing.sm }]}>
@@ -342,17 +354,23 @@ export default function Home() {
               </Text>
             </View>
           ) : (
+            // --- ✅ ESTADO CON LISTA (CORREGIDO) ---
             <View style={localStyles.transactionListContainer}>
+              {/* 1. RESTAURAMOS EL .map() */}
               {transactions.map((transaction, index) => {
+                // 'transaction' se define AQUÍ
                 const amountInfo = formatAmount(transaction);
                 const isLast = index === transactions.length - 1;
+                
                 return (
-                  <View 
+                  <TouchableOpacity // 👈 Hice que todo el ítem sea clickeable
                     key={transaction.id || index}
                     style={[
                       localStyles.transactionItem,
                       isLast && localStyles.transactionItemLast
                     ]}
+                    // 2. AÑADIMOS EL 'onPress' para ir al detalle
+                    onPress={() => router.push(`/transactions/${transaction.id}`)}
                   >
                     <View style={localStyles.transactionIconContainer}>
                       <MaterialCommunityIcons 
@@ -362,22 +380,47 @@ export default function Home() {
                       />
                     </View>
                     
+                    {/* 3. PEGAMOS LA LÓGICA INTELIGENTE *DENTRO* DEL MAP */}
                     <View style={localStyles.transactionDetails}>
-                      <Text style={localStyles.transactionDescription}>
-                        {transaction.descripcion || 'Transacción'}
-                      </Text>
+                      {/* --- Lógica para mostrar el Título Correcto --- */}
+                      {(() => {
+                        // 'transaction' SÍ existe aquí
+                        if (transaction.tipo === 'envio') {
+                          return (
+                            <Text style={localStyles.transactionDescription} numberOfLines={1}>
+                              Envío a {transaction.destinatarioNombre || 'Destinatario desconocido'}
+                            </Text>
+                          );
+                        }
+                        if (transaction.tipo === 'recepcion') {
+                          return (
+                            <Text style={localStyles.transactionDescription} numberOfLines={1}>
+                              Recibido de {transaction.remitenteNombre || 'Remitente desconocido'}
+                            </Text>
+                          );
+                        }
+                        return (
+                          <Text style={localStyles.transactionDescription} numberOfLines={1}>
+                            {transaction.descripcion || 'Transacción'}
+                          </Text>
+                        );
+                      })()}
+                      {/* --- Fin de la Lógica --- */}
+
+                      {/* Subtítulo: Muestra la fecha y la App Externa (si existe) */}
                       <Text style={localStyles.transactionDate}>
-                        {formatDate(transaction.fecha)}
+                        {formatDate(transaction.fecha)} • {transaction.destinatarioApp || transaction.remitenteApp || getTransactionTypeText(transaction.tipo)}
                       </Text>
                     </View>
                     
                     <Text style={[localStyles.transactionAmount, { color: amountInfo.color }]}>
                       {amountInfo.text}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
               
+              {/* Botón "Ver todo" */}
               <TouchableOpacity 
                 style={localStyles.transactionSeeAllButton}
                 onPress={() => router.push('/(app)/transactions')}
@@ -389,7 +432,6 @@ export default function Home() {
             </View>
           )}
         </View>
-
       </ScrollView>
     </View>
   );

@@ -3,7 +3,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile // Para actualizar el 'displayName'
+  updateProfile, // Para actualizar el 'displayName'
+  deleteUser
 } from 'firebase/auth'; // Importa funciones específicas
 import { auth } from './config'; // ✅ Importa la instancia 'auth' inicializada
 import { setUser } from './firestore'; // Para guardar datos adicionales en Firestore
@@ -85,6 +86,27 @@ export const onAuthChange = (callback) => {
   // onAuthStateChanged devuelve la función 'unsubscribe'
   return onAuthStateChanged(auth, callback);
 };
+
+/**
+ * Borra la cuenta del usuario actualmente autenticado.
+ * (Usado para 'rollback' si el registro en el Hub falla)
+ */
+export const deleteCurrentUserAccount = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("No hay usuario autenticado para borrar.");
+    }
+    await deleteUser(user);
+    console.log("Rollback de Firebase exitoso: Usuario borrado.");
+  } catch (error) {
+    console.error("¡ERROR CRÍTICO DE ROLLBACK!", error);
+    // Este es el peor escenario (un usuario huérfano)
+    // Se necesita intervención manual.
+    throw error;
+  }
+};
+
 
 /**
  * Obtener usuario actual (síncrono)

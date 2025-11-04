@@ -68,9 +68,8 @@ export default function TransactionDetail() {
   
   const [transaction, setTransaction] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [contactInfo, setContactInfo] = useState(null);
 
-  // 5. Lógica de Datos (con Toast en lugar de Alert)
+  // 5. Lógica de Datos (Simplificada)
   useEffect(() => {
     const loadTransaction = async () => {
       if (!id) {
@@ -78,18 +77,10 @@ export default function TransactionDetail() {
         return;
       }
       try {
+        // Simplemente obtenemos la transacción.
+        // Toda la info que necesitamos (nombres, etc.) YA ESTÁ DENTRO de transactionData.
         const transactionData = await getTransactionById(id);
         setTransaction(transactionData);
-
-        if (transactionData) {
-          if (transactionData.tipo === 'envio' && transactionData.destinatario) {
-            const recipient = await getUser(transactionData.destinatario);
-            setContactInfo({ type: 'destinatario', name: recipient?.nombre || 'Usuario', phone: recipient?.telefono || 'N/A' });
-          } else if (transactionData.tipo === 'recepcion' && transactionData.remitente) {
-            const sender = await getUser(transactionData.remitente);
-            setContactInfo({ type: 'remitente', name: sender?.nombre || 'Usuario', phone: sender?.telefono || 'N/A' });
-          }
-        }
       } catch (error) {
         console.error('Error cargando transacción:', error);
         Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la transacción' });
@@ -97,8 +88,9 @@ export default function TransactionDetail() {
         setLoading(false);
       }
     };
+
     loadTransaction();
-  }, [id]);
+  }, [id]); // No borres el '[id]'
 
   // 6. Helpers de formato (con theme)
   const getTransactionTypeText = (type) => {
@@ -290,7 +282,7 @@ export default function TransactionDetail() {
         contentContainerStyle={localStyles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Monto */}
+      {/* Monto (Simplificado) */}
         <View style={[
           localStyles.amountCardBase, 
           isPositive ? localStyles.amountCardSuccess : localStyles.amountCardError
@@ -298,9 +290,12 @@ export default function TransactionDetail() {
           <Text style={isPositive ? localStyles.amountTextSuccess : localStyles.amountTextError}>
             {isPositive ? '+' : ''}S/ {Math.abs(transaction.monto).toFixed(2)}
           </Text>
+          
+          {/* Muestra la descripción/concepto que guardamos */}
           <Text style={localStyles.amountDescription}>
             {transaction.descripcion || getTransactionTypeText(transaction.tipo)}
           </Text>
+          
           <Text style={[
             localStyles.amountType, 
             { color: isPositive ? theme.colors.success : theme.colors.error }
@@ -309,40 +304,86 @@ export default function TransactionDetail() {
           </Text>
         </View>
 
-        {/* Información del contacto */}
-        {contactInfo && (
-          <View style={localStyles.sectionCard}>
+      {/* Mostrar si es un ENVÍO (interno o externo) */}
+        {transaction.tipo === 'envio' && transaction.destinatarioNombre && (
+          <View style={[localStyles.sectionCard, { marginTop: 16 }]}>
             <Text style={localStyles.sectionTitle}>
-              {contactInfo.type === 'destinatario' ? 'Destinatario' : 'Remitente'}
+              Destinatario
             </Text>
-            
             <View style={localStyles.contactRow}>
               <View style={localStyles.contactIconContainer}>
-                <MaterialCommunityIcons name="account-outline" size={24} color={theme.colors.text} />
+                <MaterialCommunityIcons name="account-arrow-right-outline" size={24} color={theme.colors.text} />
               </View>
               <View style={localStyles.contactDetails}>
-                <Text style={localStyles.contactName}>{contactInfo.name}</Text>
-                <Text style={localStyles.contactPhone}>{contactInfo.phone}</Text>
+                <Text style={localStyles.contactName}>{transaction.destinatarioNombre}</Text>
+                {/* Muestra la app destino SI EXISTE (transferencia externa) */}
+                {transaction.destinatarioApp && (
+                  <Text style={localStyles.contactPhone}>{transaction.destinatarioApp}</Text>
+                )}
+                {/* Muestra el teléfono SI EXISTE (transferencia interna Khipu-a-Khipu) */}
+                {transaction.destinatarioTelefono && (
+                  <Text style={localStyles.contactPhone}>{transaction.destinatarioTelefono}</Text>
+                )}
               </View>
             </View>
           </View>
         )}
 
-        {/* Información detallada */}
-        <View style={localStyles.sectionCard}>
-          <Text style={localStyles.sectionTitle}>
+        {/* Mostrar si es una RECEPCIÓN (interna o externa) */}
+        {transaction.tipo === 'recepcion' && (
+          <View style={[localStyles.sectionCard, { marginTop: 16 }]}>
+            <Text style={localStyles.sectionTitle}>
+              Remitente
+            </Text>
+            <View style={localStyles.contactRow}>
+              <View style={localStyles.contactIconContainer}>
+                <MaterialCommunityIcons name="account-arrow-left-outline" size={24} color={theme.colors.text} />
+              </View>
+              <View style={localStyles.contactDetails}>
+                {/* (El 'remitenteNombre' puede fallar si lo pruebas con Postman, como ya descubrimos) */}
+                <Text style={localStyles.contactName}>{transaction.remitenteNombre || 'Remitente desconocido'}</Text>
+                {/* Muestra la app remitente SI EXISTE (transferencia externa) */}
+                {transaction.remitenteApp && (
+                  <Text style={localStyles.contactPhone}>{transaction.remitenteApp}</Text>
+                )}
+                {/* Muestra el teléfono SI EXISTE (transferencia interna Khipu-a-Khipu) */}
+                {transaction.remitenteTelefono && (
+                  <Text style={localStyles.contactPhone}>{transaction.remitenteTelefono}</Text>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+
+      {/* Información detallada (Mejorada) */}
+        <View style={[localStyles.sectionCard, { marginTop: 16 }]}>
+          <Text style={[globalStyles.subtitle, { marginBottom: 16 }]}>
             Información de la Transacción
           </Text>
           <DetailRow label="Fecha" value={date} />
           <DetailRow label="Hora" value={time} />
-          <DetailRow label="Tipo" value={getTransactionTypeText(transaction.tipo)} />
-          <DetailRow label="Categoría" value={transaction.categoria || 'General'} />
           <DetailRow 
             label="Estado" 
             value={getStatusText(transaction.estado)} 
             valueStyle={statusStyle}
           />
-          <DetailRow label="ID de transacción" value={transaction.id} />
+          
+          {/* Fila Opcional: Descripción/Concepto */}
+          {transaction.descripcion && (
+            <DetailRow label="Concepto" value={transaction.descripcion} />
+          )}
+
+          {/* Fila Opcional: ID de la App Externa */}
+          {transaction.destinatarioApp && (
+            <DetailRow label="Aplicación Destino" value={transaction.destinatarioApp} />
+          )}
+
+          {/* Fila Opcional: ID del Log Central */}
+          {transaction.centralTransactionId && (
+            <DetailRow label="ID de Hub Central" value={transaction.centralTransactionId} />
+          )}
+          
+          <DetailRow label="ID de transacción (Khipu)" value={transaction.id} />
         </View>
 
       </ScrollView>

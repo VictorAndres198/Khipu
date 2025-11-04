@@ -24,6 +24,8 @@ import useTheme from '../src/hooks/useTheme'; // 👈 Hook de tema
 
 // 2. Lógica de Firebase (sin cambios)
 import { register, onAuthChange, getCurrentUser } from '../src/services/firebase/auth';
+// ApiCentral Importación
+import { registerWalletInHub } from '../src/services/Api/centralApi';
 
 const registerSchema = yup.object().shape({
   nombre: yup
@@ -88,21 +90,81 @@ const {
 
   const onSubmit = async (data) => {
     setLoading(true);
+    let createdFirebaseUser = null; // Variable para saber si necesitamos hacer rollback
+
     try {
-      await register(data.email, data.password, { 
+      // --- PASO 1: REGISTRO INTERNO (Firebase) ---
+      // 'register' devuelve el objeto 'user'
+      createdFirebaseUser = await register(data.email, data.password, { 
         nombre: data.nombre, 
         telefono: data.telefono 
       });
-      Toast.show({ type: 'success', text1: '¡Cuenta creada!' });
+
+      // --- PASO 2: REGISTRO EXTERNO (API Central) ---
+      const centralData = {
+        userIdentifier: data.telefono,
+        internalWalletId: createdFirebaseUser.uid, // Usamos el 'uid' del usuario creado
+        userName: data.nombre
+      };
+
+      const centralResponse = await registerWalletInHub(centralData);
+
+      if (!centralResponse.success) {
+        // Si el API Central falla, lanzamos un error
+        // Esto detendrá la ejecución y nos enviará al bloque 'catch'
+        throw new Error(centralResponse.message || "No se pudo registrar en el Hub Central.");
+      }
+
+      // --- PASO 3: ÉXITO TOTAL ---
+      console.log("¡Usuario registrado en Firebase y en el Hub Central!");
+      Toast.show({ 
+        type: 'success', 
+        text1: '¡Cuenta creada!',
+        text2: 'Bienvenido a Khipu.'
+      });
+      // (El onAuthChange se encargará de la redirección)
+
     } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error al crear cuenta', text2: error.message });
+      // --- PASO 4: MANEJO DE ERROR Y ROLLBACK ---
+      console.error("Error en el doble registro:", error);
+
+      // SI 'createdFirebaseUser' NO es null, significa que el Paso 1 (Firebase) tuvo éxito
+      // pero el Paso 2 (API Central) falló. ¡Debemos hacer rollback!
+      if (createdFirebaseUser) {
+        console.warn("Fallo en API Central. Iniciando rollback de Firebase...");
+        
+        try {
+          // Intentamos borrar el usuario de Firebase que acabamos de crear
+          await deleteCurrentUserAccount();
+          // Informamos al usuario que el registro falló pero fue limpiado
+          Toast.show({ 
+            type: 'error', 
+            text1: 'Registro fallido', 
+            text2: 'No se pudo conectar al Hub Central. Inténtalo de nuevo.' 
+          });
+        } catch (deleteError) {
+          // ¡EL PEOR ESCENARIO! No se pudo hacer el rollback.
+          console.error("¡ERROR CRÍTICO DE ROLLBACK!", deleteError);
+          Toast.show({ 
+            type: 'error', 
+            text1: 'Error Crítico', 
+            text2: 'Usuario creado sin conexión al Hub. Contacte a soporte.' 
+          });
+        }
+        
+      } else {
+        // Si 'createdFirebaseUser' es null, el error ocurrió en el PASO 1 (Firebase)
+        // (ej. "email-already-in-use"). No hay nada que revertir.
+        Toast.show({ 
+          type: 'error', 
+          text1: 'Error al crear cuenta', 
+          text2: error.message 
+        });
+      }
+
     } finally {
       setLoading(false);
     }
-  };
-
-  const updateField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   // 6. Estilos locales y dinámicos para esta pantalla

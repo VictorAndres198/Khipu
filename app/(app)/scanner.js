@@ -73,9 +73,11 @@ export default function ScannerScreen() {
  
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true); 
+    
+    // ✅ LÍNEA CORREGIDA
     router.replace({
-      pathname: '/(app)/send-money',
-      params: { scannedUid: data }  
+      pathname: '/(app)/sendMoneyCentral',
+      params: { scannedIdentifier: data } // 👈 ¡EL CAMBIO CLAVE!
     });
   };
  

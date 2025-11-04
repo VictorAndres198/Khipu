@@ -28,6 +28,15 @@ export default function AppLayout() {
       <Stack.Screen
         name="send-money" // (app)/send-money.js
       />
+
+      <Stack.Screen
+        name="sendMoneyCentral" // (app)/sendMoneyCentral.js
+        options={{
+          headerShown: false, // Ocultamos el header por defecto
+          presentation: 'modal' // Opcional: para que deslice desde abajo
+        }}
+      />
+
       <Stack.Screen
         name="transactions/index" // (app)/transactions/index.js
       />

@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { listenToUser } from '../../src/services/firebase/firestore';
+import { ActivityIndicator } from 'react-native'; // Para la carga
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import useSafeArea from '../../src/hooks/useSafeArea';
@@ -14,9 +16,18 @@ export default function MyQRScreen() {
   const globalStyles = useGlobalStyles();
   const { theme } = useTheme();
   
+  const [userData, setUserData] = useState(null);
   const user = getCurrentUser();
-  const userUid = user ? user.uid : 'error-no-user';
 
+  useEffect(() => {
+    if (user) {
+      // Escucha tu documento de Firebase para obtener tu 'telefono'
+      const unsub = listenToUser(user.uid, (data) => {
+        setUserData(data);
+      });
+      return () => unsub();
+    }
+  }, [user]);
 
   const localStyles = useMemo(() => StyleSheet.create({
     container: {
@@ -54,11 +65,15 @@ export default function MyQRScreen() {
       </Text>
       
       <View style={localStyles.qrContainer}>
-        <QRCode
-          value={userUid} 
-          size={250}
-          logoBackgroundColor="transparent"
-        />
+        {userData ? (
+          <QRCode
+            value={userData.telefono} // 👈 ¡EL CAMBIO CLAVE!
+            size={250}
+            logoBackgroundColor="transparent"
+          />
+        ) : (
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        )}
       </View>
       
       <TouchableOpacity style={{width: '100%'}} onPress={() => router.back()}>
