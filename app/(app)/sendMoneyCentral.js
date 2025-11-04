@@ -44,10 +44,21 @@ const sendSchema = yup.object().shape({
     .number()
     .typeError('Debe ser un monto válido')
     .positive('El monto debe ser positivo')
-    .required('El monto es requerido'),
-  // (Aquí podrías añadir validación de saldo si la API Central lo proveyera)
+    .required('El monto es requerido')
+    // ¡LA VALIDACIÓN CLAVE DE UX!
+    .test(
+      'is-decimal',
+      'El monto solo puede tener hasta dos decimales',
+      (value) => {
+        // value es el número (ej: 10.50). Lo convertimos a string para revisarlo.
+        if (!value) return true; // Si está vacío, la regla 'required' se encarga
+        // Esta regex (^\d+(\.\d{1,2})?$) comprueba que sea:
+        // 1. Un número
+        // 2. (Opcional) un punto, seguido de 1 o 2 decimales.
+        return /^\d+(\.\d{1,2})?$/.test(String(value));
+      }
+    )
 });
-
 // --- Componente ---
 export default function SendMoneyCentral() {
   const { safeAreaInsets } = useSafeArea(true); // 'true' para padding inferior
