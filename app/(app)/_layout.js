@@ -26,10 +26,6 @@ export default function AppLayout() {
       
       {/* 5. Define las otras pantallas (las que NO tienen tab bar) */}
       <Stack.Screen
-        name="send-money" // (app)/send-money.js
-      />
-
-      <Stack.Screen
         name="sendMoneyCentral" // (app)/sendMoneyCentral.js
         options={{
           headerShown: false, // Ocultamos el header por defecto
