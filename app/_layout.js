@@ -1,15 +1,56 @@
 // app/_layout.js (EL LAYOUT RAÍZ, CORREGIDO)
-import { Stack } from "expo-router"; // 1. Importar Stack
+import { Stack, SplashScreen } from "expo-router"; 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useEffect, useRef } from 'react'; 
+import { AppState } from 'react-native';
+import { db } from '../src/services/firebase/config';
+import { enableNetwork, disableNetwork } from 'firebase/firestore'; 
+
+// --- Imports de Tema y Toast ---
 import { ThemeProvider } from '../src/hooks/useTheme';
 import useTheme from '../src/hooks/useTheme';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
-// Componente interno para acceder al hook
-function AppLayout() {
-  const { theme } = useTheme(); // 2. Obtener tema
+// --- Imports de Fuentes ---
+import { 
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_700Bold 
+} from '@expo-google-fonts/inter';
 
-  // 3. Config de Toast (usando el tema dinámico)
+// -----------------------------------------------------------------
+// (Opcional) Mantiene la Splash Screen visible desde el inicio
+SplashScreen.preventAutoHideAsync();
+// -----------------------------------------------------------------
+
+
+// Componente interno para acceder a los hooks (Tema, AppState, Toast)
+function AppLayout() {
+  const { theme } = useTheme();
+
+  // --- Lógica de AppState (Para bug de "estado rancio") ---
+  const appState = useRef(AppState.currentState);
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        console.log('[AppState] App ha vuelto. Forzando reconexión de Firestore...');
+        disableNetwork(db)
+          .then(() => enableNetwork(db))
+          .then(() => console.log('[AppState] Reconexión de Firestore forzada.'));
+      }
+      appState.current = nextAppState;
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+  // --- Fin Lógica AppState ---
+
+  // --- Config de Toast (usando el tema dinámico) ---
   const toastConfig = {
     success: (props) => (
       <BaseToast
@@ -18,12 +59,12 @@ function AppLayout() {
         contentContainerStyle={{ paddingHorizontal: 15 }}
         text1Style={{
           fontSize: 16,
-          fontFamily: 'System', 
+          fontFamily: 'Inter-Medium', 
           color: theme.colors.text
         }}
         text2Style={{
           fontSize: 14,
-          fontFamily: 'System', 
+          fontFamily: 'Inter-Regular', 
           color: theme.colors.textSecondary
         }}
       />
@@ -35,45 +76,68 @@ function AppLayout() {
         contentContainerStyle={{ paddingHorizontal: 15 }}
         text1Style={{
           fontSize: 16,
-          fontFamily: 'System', 
+          fontFamily: 'Inter-Medium', 
           color: theme.colors.text
         }}
         text2Style={{
           fontSize: 14,
-          fontFamily: 'System', 
+          fontFamily: 'Inter-Regular', 
           color: theme.colors.textSecondary
         }}
       />
     ),
   };
 
+  // --- JSX del Layout ---
   return (
     <>
-      {/* 4. ¡SOLUCIÓN AL FONDO BLANCO! */}
-      {/* Este Stack controla todas las pantallas de este nivel */}
+      {/* Stack principal (Auth y App) */}
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: {
-            backgroundColor: theme.colors.background // 👈 FONDO DINÁMICO
+            backgroundColor: theme.colors.background // Fondo dinámico
           }
         }}
       >
-        {/* Definimos explícitamente las pantallas en este nivel */}
         <Stack.Screen name="index" /> 
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
         <Stack.Screen name="(app)" /> 
       </Stack>
       
-      {/* 5. Toast global */}
+      {/* Toast global */}
       <Toast config={toastConfig} />
     </>
   );
 }
 
-// Provider principal
+
+// --- Provider Principal (RootLayout) ---
+// (Aquí es donde ocurre la "Compuerta de Carga de Fuentes")
 export default function RootLayout() {
+
+  // 1. Carga las fuentes que importamos
+  const [fontsLoaded, fontError] = useFonts({
+    'Inter-Regular': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-Bold': Inter_700Bold,
+  });
+
+  // 2. Mantiene la Splash Screen visible mientras se cargan las fuentes
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      // Oculta el splash screen SOLO cuando las fuentes están listas (o si hay error)
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // 3. LA COMPUERTA: No renderiza NADA hasta que las fuentes estén listas
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
+  // 4. Una vez cargadas, renderiza la app
   return (
     <SafeAreaProvider>
       <ThemeProvider>
