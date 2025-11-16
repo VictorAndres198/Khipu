@@ -33,11 +33,18 @@ import { findWalletsByIdentifier, transferMoneyCentral } from '../../src/service
 const searchSchema = yup.object().shape({
   identifier: yup
     .string()
-    .matches(/^[0-9]+$/, 'Solo números')
-    .min(9, 'Debe ser un teléfono (9) o DNI (8) válido')
-    .required('El identificador es requerido'),
+    .matches(/^[0-9]+$/, 'Solo debe contener números')
+    .required('El identificador es requerido')
+    .test(
+      'longitud-valida', // Nombre interno del test
+      'Debe ser un DNI (8 dígitos) o un teléfono (9 dígitos)', // El mensaje de error
+      (value) => {
+        // 'value' es el texto que el usuario escribió
+        if (!value) return true; // Si está vacío, la regla 'required' se encarga
+        return value.length === 8 || value.length === 9; 
+      }
+    )
 });
-
 // 2. Esquema para el segundo paso (Enviar)
 const sendSchema = yup.object().shape({
   monto: yup
