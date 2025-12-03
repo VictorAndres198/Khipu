@@ -1,4 +1,4 @@
-# Khipu - Tu Billetera Digital Simple y Segura, Wallet App
+# Khipu - Tu Billetera Digital Simple y Segura, (Microservicios Hub-and-Spoke)
 
 Aplicación móvil de billetera digital desarrollada con React Native y Expo, enfocada en la simplicidad y seguridad para transferencias P2P. Permite a los usuarios gestionar su saldo, enviar y recibir dinero mediante número de teléfono o código QR, y ver su historial de transacciones.
 
