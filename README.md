@@ -3,6 +3,11 @@
 Aplicación móvil de billetera digital desarrollada con React Native y Expo, enfocada en la simplicidad y seguridad para transferencias P2P. Permite a los usuarios gestionar su saldo, enviar y recibir dinero mediante número de teléfono o código QR, y ver su historial de transacciones.
 
 ---
+<div align="center">
+  <a href="https://github.com/user-attachments/assets/af52b74d-09ec-4d2c-9738-5a05c497fa4f" target="_blank">
+    <img width="300" alt="splash-icon" src="https://github.com/user-attachments/assets/af52b74d-09ec-4d2c-9738-5a05c497fa4f" />
+  </a>
+</div>
 
 ## 📱 Capturas de Pantalla
 
