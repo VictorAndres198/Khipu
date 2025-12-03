@@ -8,7 +8,7 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 
 | Login / Auth | Home & Saldo | Transferencia QR |
 |:---:|:---:|:---:|
-|<img width="430" alt="Duo" src="https://github.com/user-attachments/assets/c2f4cb41-60ac-4572-a91e-5171bfcf24b2" /> | <img width="200"  alt="Home" src="https://github.com/user-attachments/assets/ce2611e4-cb99-4287-9a76-47e053706462" /> | <img width="430" alt="Duo 2" src="https://github.com/user-attachments/assets/99f8fd81-6cf9-4caf-a779-1b0e6576e095" /> |
+|<a width="430" alt="Duo" src="https://github.com/user-attachments/assets/c2f4cb41-60ac-4572-a91e-5171bfcf24b2" /> | <a width="200"  alt="Home" src="https://github.com/user-attachments/assets/ce2611e4-cb99-4287-9a76-47e053706462" /> | <a width="430" alt="Duo 2" src="https://github.com/user-attachments/assets/99f8fd81-6cf9-4caf-a779-1b0e6576e095" /> |
 
 ---
 ## 🏗️ Arquitectura del Sistema (Hub-and-Spoke)
