@@ -4,28 +4,18 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 
 ---
 
-## ✨ Características Principales
+## 📱 Capturas de Pantalla
 
-* **Autenticación Segura:** Registro e inicio de sesión con Firebase Authentication (Email/Contraseña) con persistencia nativa.
-* **Gestión de Saldo:** Visualización del saldo actual en tiempo real (Firestore Listener).
-* **Transferencias P2P:** Envío de dinero a otros usuarios registrados buscando por número de teléfono.
-* **Pago por QR:**
-    * **Generación de QR:** Código QR único por usuario (basado en UID de Firebase).
-    * **Escaneo de QR:** Escáner integrado para leer QR e iniciar transferencias pre-llenando destinatario.
-* **Historial de Transacciones:** Lista detallada y en tiempo real de todas las transacciones (Firestore Listener).
-* **Recarga (Simulada):** Opciones para añadir saldo de prueba.
-* **Perfil de Usuario:** Visualización/Gestión de datos personales y configuraciones.
-* **Tema Claro/Oscuro:** Soporte para modo claro, oscuro y automático (sistema), con persistencia (`AsyncStorage`).
-* **Validación Avanzada:** Formularios robustos con validación en tiempo real (`React Hook Form` + `Yup`).
-* **Feedback Moderno:** Notificaciones no bloqueantes (`react-native-toast-message`) para confirmaciones y errores.
-* **Configuración Segura:** Uso de variables de entorno (`.env`) para credenciales de Firebase.
+| Login / Auth | Home & Saldo | Transferencia QR |
+|:---:|:---:|:---:|
+|<img width="430" alt="Duo" src="https://github.com/user-attachments/assets/c2f4cb41-60ac-4572-a91e-5171bfcf24b2" /> | <img width="200"  alt="Home" src="https://github.com/user-attachments/assets/ce2611e4-cb99-4287-9a76-47e053706462" /> | <img width="430" alt="Duo 2" src="https://github.com/user-attachments/assets/99f8fd81-6cf9-4caf-a779-1b0e6576e095" /> |
+
 ---
 ## 🏗️ Diagrama de flujo de como funciona la transferencia (Hub-and-Spoke)
 
 Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y NoSQL.
 
-<img width="1697" height="1121" alt="Imagen1" src="https://github.com/user-attachments/assets/4c3a3825-88f7-475b-8c17-99fab3e86a2a" />
-
+<img width="1697" height="1121" alt="Imagen1" src="https://github.com/user-attachments/assets/12f1c135-e12d-4619-bab2-fc1cde16b5b2" />
 
 ---
 
@@ -43,15 +33,58 @@ Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y N
 * **Persistencia (Tema y Auth):** `@react-native-async-storage/async-storage`
 * **Configuración:** Variables de Entorno (`dotenv` a través de Expo)
 
----
-
-## 📱 Capturas de Pantalla
-
-| Login / Auth | Home & Saldo | Transferencia QR |
-|:---:|:---:|:---:|
-|<img width="430" alt="Duo" src="https://github.com/user-attachments/assets/c2f4cb41-60ac-4572-a91e-5171bfcf24b2" /> | <img width="200"  alt="Home" src="https://github.com/user-attachments/assets/ce2611e4-cb99-4287-9a76-47e053706462" /> | <img width="430" alt="Duo 2" src="https://github.com/user-attachments/assets/99f8fd81-6cf9-4caf-a779-1b0e6576e095" /> |
 
 ---
+## 📁 Estructura del Proyecto (Simplificada)
+
+```
+.
+├── app/                  # Rutas y pantallas (Expo Router)
+│   ├── (app)/            # Layout principal autenticado (Stack)
+│   │   ├── (tabs)/       # Layout de pestañas
+│   │   │   ├── _layout.js
+│   │   │   ├── home.js | wallet.js | profile.js
+│   │   ├── _layout.js    # Stack Layout (maneja fondo dinámico)
+│   │   ├── my-qr.js      # Pantalla de generar QR
+│   │   ├── scanner.js    # Pantalla de escanear QR
+│   │   ├── send-money.js # Pantalla de enviar dinero
+│   │   └── transactions/ # Pantallas de historial
+│   ├── _layout.js        # Layout raíz (ThemeProvider, Toast, Stack inicial)
+│   ├── index.js          # Pantalla inicial (Verificación Auth)
+│   ├── login.js          # Pantalla de Login
+│   └── register.js       # Pantalla de Registro
+├── assets/               # Fuentes, imágenes, splash screen
+├── components/           # Componentes reutilizables (ej. TabBar)
+├── src/                  # Código fuente principal
+│   ├── hooks/            # Hooks personalizados
+│   ├── services/         # Lógica de negocio (Firebase config, auth, firestore, conexión al Api Central)
+│   └── styles/           # Estilos globales y temas
+├── .env                  # Variables de entorno (Firebase config) <- NO SUBIR A GIT
+├── .gitignore            # Archivos ignorados por Git
+├── app.json              # Configuración de Expo
+└── package.json          # Dependencias y scripts
+```
+
+---
+
+## ✨ Características Principales
+
+* **Autenticación Segura:** Registro e inicio de sesión con Firebase Authentication (Email/Contraseña) con persistencia nativa.
+* **Gestión de Saldo:** Visualización del saldo actual en tiempo real (Firestore Listener).
+* **Transferencias P2P:** Envío de dinero a otros usuarios registrados buscando por número de teléfono.
+* **Pago por QR:**
+    * **Generación de QR:** Código QR único por usuario (basado en UID de Firebase).
+    * **Escaneo de QR:** Escáner integrado para leer QR e iniciar transferencias pre-llenando destinatario.
+* **Historial de Transacciones:** Lista detallada y en tiempo real de todas las transacciones (Firestore Listener).
+* **Recarga (Simulada):** Opciones para añadir saldo de prueba.
+* **Perfil de Usuario:** Visualización/Gestión de datos personales y configuraciones.
+* **Tema Claro/Oscuro:** Soporte para modo claro, oscuro y automático (sistema), con persistencia (`AsyncStorage`).
+* **Validación Avanzada:** Formularios robustos con validación en tiempo real (`React Hook Form` + `Yup`).
+* **Feedback Moderno:** Notificaciones no bloqueantes (`react-native-toast-message`) para confirmaciones y errores.
+* **Configuración Segura:** Uso de variables de entorno (`.env`) para credenciales de Firebase.
+---
+
+
 
 
 ## 🚀 Instalación y Uso
@@ -101,37 +134,6 @@ Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y N
 
 ---
 
-## 📁 Estructura del Proyecto (Simplificada)
-
-```
-.
-├── app/                  # Rutas y pantallas (Expo Router)
-│   ├── (app)/            # Layout principal autenticado (Stack)
-│   │   ├── (tabs)/       # Layout de pestañas
-│   │   │   ├── _layout.js
-│   │   │   ├── home.js | wallet.js | profile.js
-│   │   ├── _layout.js    # Stack Layout (maneja fondo dinámico)
-│   │   ├── my-qr.js      # Pantalla de generar QR
-│   │   ├── scanner.js    # Pantalla de escanear QR
-│   │   ├── send-money.js # Pantalla de enviar dinero
-│   │   └── transactions/ # Pantallas de historial
-│   ├── _layout.js        # Layout raíz (ThemeProvider, Toast, Stack inicial)
-│   ├── index.js          # Pantalla inicial (Verificación Auth)
-│   ├── login.js          # Pantalla de Login
-│   └── register.js       # Pantalla de Registro
-├── assets/               # Fuentes, imágenes, splash screen
-├── components/           # Componentes reutilizables (ej. TabBar)
-├── src/                  # Código fuente principal
-│   ├── hooks/            # Hooks personalizados
-│   ├── services/         # Lógica de negocio (Firebase config, auth, firestore, conexión al Api Central)
-│   └── styles/           # Estilos globales y temas
-├── .env                  # Variables de entorno (Firebase config) <- NO SUBIR A GIT
-├── .gitignore            # Archivos ignorados por Git
-├── app.json              # Configuración de Expo
-└── package.json          # Dependencias y scripts
-```
-
----
 
 ## 🔮 Posibles Mejoras Futuras
 
