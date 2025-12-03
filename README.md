@@ -1,6 +1,6 @@
 # Khipu - Tu Billetera Digital Simple y Segura, Wallet App
 
-Aplicación móvil de billetera digital desarrollada con React Native y Expo, enfocada en la simplicidad y seguridad para transferencias P2P. Permite a los usuarios gestionar su saldo, enviar y recibir dinero mediante número de teléfono o código QR, y ver su historial de transacciones. [Imagen de una billetera digital moderna en un celular]
+Aplicación móvil de billetera digital desarrollada con React Native y Expo, enfocada en la simplicidad y seguridad para transferencias P2P. Permite a los usuarios gestionar su saldo, enviar y recibir dinero mediante número de teléfono o código QR, y ver su historial de transacciones.
 
 ---
 
@@ -50,22 +50,20 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone https://github.com/tu-usuario/khipu-app.git
-    cd khipu-app
+    git clone https://github.com/VictorAndres198/Khipu.git      
+    cd khipu
     ```
 
 2.  **Instalar dependencias:**
     ```bash
     npm install
-    # o
-    # yarn install
     ```
 
 3.  **Configurar Variables de Entorno (Firebase):**
     * Crea un archivo llamado `.env` en la **raíz** del proyecto.
     * Añade tus credenciales de Firebase obtenidas desde la consola de Firebase. **Es crucial usar el prefijo `EXPO_PUBLIC_`**:
         ```dotenv
-        # Firebase Configuration - NO SUBIR A GIT
+        # Firebase Configuration - EJEMPLO DE COMO CREARLO
         EXPO_PUBLIC_FIREBASE_API_KEY=TU_API_KEY
         EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=TU_AUTH_DOMAIN
         EXPO_PUBLIC_FIREBASE_PROJECT_ID=TU_PROJECT_ID
@@ -73,6 +71,8 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
         EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=TU_SENDER_ID
         EXPO_PUBLIC_FIREBASE_APP_ID=TU_APP_ID
         EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID=TU_MEASUREMENT_ID_OPCIONAL
+        EXPO_PUBLIC_CENTRAL_API_URL=TU_ID_BASE_DEL_API
+        EXPO_PUBLIC_KHIPU_API_KEY=TU_SK_PARA_EL_API_CENTRAL
         ```
     * Reemplaza `TU_...` con tus valores reales.
 
@@ -107,7 +107,7 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 ├── components/           # Componentes reutilizables (ej. TabBar)
 ├── src/                  # Código fuente principal
 │   ├── hooks/            # Hooks personalizados
-│   ├── services/         # Lógica de negocio (Firebase config, auth, firestore)
+│   ├── services/         # Lógica de negocio (Firebase config, auth, firestore, conexión al Api Central)
 │   └── styles/           # Estilos globales y temas
 ├── .env                  # Variables de entorno (Firebase config) <- NO SUBIR A GIT
 ├── .gitignore            # Archivos ignorados por Git
