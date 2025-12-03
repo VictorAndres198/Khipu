@@ -19,48 +19,14 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 * **Validación Avanzada:** Formularios robustos con validación en tiempo real (`React Hook Form` + `Yup`).
 * **Feedback Moderno:** Notificaciones no bloqueantes (`react-native-toast-message`) para confirmaciones y errores.
 * **Configuración Segura:** Uso de variables de entorno (`.env`) para credenciales de Firebase.
-
-## 🏗️ Arquitectura del Sistema (Hub-and-Spoke)
+---
+## 🏗️ Diagrama de flujo de como funciona la transferencia (Hub-and-Spoke)
 
 Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y NoSQL.
 
-```mermaid
-graph TD
-    User((Usuario Móvil))
-    
-    subgraph Client [App React Native]
-        UI[Interfaz de Usuario]
-        AuthService[Servicio de Auth]
-        QRService[Generador/Lector QR]
-    end
-    
-    subgraph Cloud_Services [Nube & Backend]
-        Auth(Firebase Auth)
-        Firestore(Firestore NoSQL - Saldos en TR)
-        
-        subgraph Core_Banking [API Central - Node.js]
-            HubAPI[Hub de Pagos REST]
-            Logic[Lógica de Transacción]
-        end
-        
-        Postgres[(PostgreSQL - Ledger/Auditoría)]
-    end
+<img width="1697" height="1121" alt="Imagen1" src="https://github.com/user-attachments/assets/4c3a3825-88f7-475b-8c17-99fab3e86a2a" />
 
-    User --> UI
-    UI --> AuthService
-    AuthService --> Auth
-    
-    UI --> QRService
-    
-    %% Flujo de Lectura
-    UI -.->|Escucha cambios en TR| Firestore
-    
-    %% Flujo de Transacción
-    UI -->|Envía Transacción| HubAPI
-    HubAPI -->|Valida y Procesa| Logic
-    Logic -->|Registra Transacción| Postgres
-    Logic -->|Sincroniza Saldo| Firestore
-```
+
 ---
 
 ## 🛠️ Tech Stack
