@@ -1,15 +1,14 @@
-// src/services/api/centralApi.js
-// Este archivo es el "conector" entre tu app Khipu y el API Central en Render.
+// Este archivo es el "conector" entre Khipu y el API Central en Render.
 
 // 1. Configuración de la API
-// (Asegúrate de que esta sea la URL de tu servicio en Render)
-const API_URL = 'https://billetera-central-api.onrender.com'; 
+// (URL de servicio en Render)
+const API_URL = process.env.EXPO_PUBLIC_CENTRAL_API_URL;
 
-// (Esta es la llave secreta de Khipu que insertamos en la BD de Postgres)
-const KHIPU_API_KEY = 'sk_khipu_a1b2c3d4e5f6g7h8'; 
+// (Llave secreta de Khipu en la BD de Postgres)
+const KHIPU_API_KEY = process.env.EXPO_PUBLIC_KHIPU_API_KEY;
 
 /**
- * Función genérica para manejar las llamadas fetch a la API Central
+ * Función para manejar las llamadas fetch a la API Central
  */
 const apiFetch = async (endpoint, options = {}) => {
   try {
@@ -17,7 +16,7 @@ const apiFetch = async (endpoint, options = {}) => {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Token': KHIPU_API_KEY, // ¡Tu llave secreta de Khipu!
+        'X-API-Token': KHIPU_API_KEY, 
         ...options.headers,
       },
     });
@@ -78,11 +77,3 @@ export const transferMoneyCentral = (data) => {
     body: JSON.stringify(data),
   });
 };
-
-/**
- * (Opcional) Endpoint D: Consultar tu propio saldo centralizado
- * (Este endpoint NO lo hicimos en el index.js, pero sería el siguiente paso)
- */
-// export const getCentralBalance = (userIdentifier) => {
-//   return apiFetch(`/api/v1/balance/${userIdentifier}`); 
-// };
