@@ -11,14 +11,110 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 |<img width="430" alt="Duo" src="https://github.com/user-attachments/assets/c2f4cb41-60ac-4572-a91e-5171bfcf24b2" /> | <img width="200"  alt="Home" src="https://github.com/user-attachments/assets/ce2611e4-cb99-4287-9a76-47e053706462" /> | <img width="430" alt="Duo 2" src="https://github.com/user-attachments/assets/99f8fd81-6cf9-4caf-a779-1b0e6576e095" /> |
 
 ---
-## 🏗️ Diagrama de flujo de como funciona la transferencia (Hub-and-Spoke)
+## 🏗️ Arquitectura del Sistema (Hub-and-Spoke)
 
-Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y NoSQL.
+Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y NoSQL. La App móvil actúa como un cliente, mientras que la lógica de orquestación reside en una API Centralizada.
 
-<img width="1697" height="1121" alt="Imagen1" src="https://github.com/user-attachments/assets/12f1c135-e12d-4619-bab2-fc1cde16b5b2" />
+> 🔗 **Código Fuente del Backend:** Puedes ver la implementación de la API, los esquemas **SQL (PostgreSQL)** y la lógica de enrutamiento en el repositorio del servidor:  
+> **[github.com/VictorAndres198/billetera-central-api](https://github.com/VictorAndres198/billetera-central-api)**
 
 ---
 
+## 🌐 Detalles Técnicos de la API
+
+Aunque el código está en el otro repositorio, aquí dejo un resumen de la estructura de datos para facilitar la revisión.
+
+<details>
+<summary><strong>👇 Ver Esquema de Base de Datos SQL y Endpoints (Resumen)</strong></summary>
+   
+### 1. Modelo de Funcionamiento
+El sistema funciona como un **Directorio y Enrutador**:
+1.  **Directorio:** Mapea números de teléfono a Webhooks de diferentes aplicaciones (Khipu, BilleteraB, etc.).
+2.  **Enrutador:** Recibe una orden de pago de una App y la reenvía al backend de la App destino.
+
+**URL Base:** `https://billetera-central-api.onrender.com`
+
+---
+
+### 2. Esquema de Base de Datos (PostgreSQL)
+Diseño relacional para garantizar la integridad de las transacciones y el registro de participantes.
+
+**Tabla: `participants` (Las Apps)**
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id` (PK) | `uuid` | ID único de la app. |
+| `webhook_url`| `varchar` | Endpoint para recibir dinero. |
+| `token` | `varchar` | API Key para firmar peticiones. |
+
+**Tabla: `wallets` (El Directorio)**
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `wallet_uuid` (PK)| `uuid` | ID único del registro. |
+| `user_identifier` | `varchar` | **ID Universal:** Teléfono del usuario. |
+| `internal_wallet_id`| `varchar` | ID en la BD interna (Firebase/SQL). |
+| `participant_id` (FK)| `uuid` | Relación con la tabla participants. |
+
+---
+
+### 3. Diagrama de Entidad-Relación (ERD)
+
+```mermaid
+erDiagram
+    PARTICIPANTS ||--o{ WALLETS : "registra"
+    PARTICIPANTS ||--o{ TRANSACTIONS_LOG : "envia/recibe"
+    
+    PARTICIPANTS {
+        uuid id PK
+        string app_name
+        string webhook_url
+        string token
+    }
+    
+    WALLETS {
+        uuid wallet_uuid PK
+        string user_identifier
+        string internal_wallet_id
+        uuid participant_id FK
+    }
+
+    TRANSACTIONS_LOG {
+        uuid tx_uuid PK
+        decimal monto
+        string status
+        uuid from_participant_id FK
+        uuid to_participant_id FK
+    }
+```
+---
+## 4. Endpoints Clave
+
+A. Ejecutar Transferencia (POST /api/v1/transfer)
+Orquesta el movimiento de dinero entre dos apps distintas.
+
+```
+{
+  "fromIdentifier": "999888777",
+  "toIdentifier": "111222333",
+  "toAppName": "BilleteraGrupoB",
+  "monto": 10.50
+}
+```
+
+
+### B. Webhook de Recepción
+
+Formato JSON estandarizado que cada App (Spoke) debe implementar para aceptar depósitos.
+```
+{
+  "fromAppName": "Khipu",
+  "internalWalletId": "firebase_uid_destino",
+  "monto": 10.50,
+  "centralTransactionId": "tx-uuid-12345"
+}
+```
+</details>
+
+---
 ## 🛠️ Tech Stack
 
 * **Frontend:** React Native
