@@ -111,7 +111,7 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 │   └── styles/           # Estilos globales y temas
 ├── .env                  # Variables de entorno (Firebase config) <- NO SUBIR A GIT
 ├── .gitignore            # Archivos ignorados por Git
-├── app.json              # Configuración de Expo (Splash Screen!)
+├── app.json              # Configuración de Expo
 └── package.json          # Dependencias y scripts
 ```
 
