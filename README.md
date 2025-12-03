@@ -20,6 +20,47 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 * **Feedback Moderno:** Notificaciones no bloqueantes (`react-native-toast-message`) para confirmaciones y errores.
 * **Configuración Segura:** Uso de variables de entorno (`.env`) para credenciales de Firebase.
 
+## 🏗️ Arquitectura del Sistema (Hub-and-Spoke)
+
+Este proyecto simula un entorno Fintech real donde conviven tecnologías SQL y NoSQL.
+
+```mermaid
+graph TD
+    User((Usuario Móvil))
+    
+    subgraph Client [App React Native]
+        UI[Interfaz de Usuario]
+        AuthService[Servicio de Auth]
+        QRService[Generador/Lector QR]
+    end
+    
+    subgraph Cloud_Services [Nube & Backend]
+        Auth(Firebase Auth)
+        Firestore(Firestore NoSQL - Saldos en TR)
+        
+        subgraph Core_Banking [API Central - Node.js]
+            HubAPI[Hub de Pagos REST]
+            Logic[Lógica de Transacción]
+        end
+        
+        Postgres[(PostgreSQL - Ledger/Auditoría)]
+    end
+
+    User --> UI
+    UI --> AuthService
+    AuthService --> Auth
+    
+    UI --> QRService
+    
+    %% Flujo de Lectura
+    UI -.->|Escucha cambios en TR| Firestore
+    
+    %% Flujo de Transacción
+    UI -->|Envía Transacción| HubAPI
+    HubAPI -->|Valida y Procesa| Logic
+    Logic -->|Registra Transacción| Postgres
+    Logic -->|Sincroniza Saldo| Firestore
+```
 ---
 
 ## 🛠️ Tech Stack
@@ -37,6 +78,18 @@ Aplicación móvil de billetera digital desarrollada con React Native y Expo, en
 * **Configuración:** Variables de Entorno (`dotenv` a través de Expo)
 
 ---
+
+## 📱 Capturas de Pantalla
+
+| Login / Auth | Home & Saldo | Transferencia QR |
+|:---:|:---:|:---:|
+|<img width="200" alt="Duo" src="https://github.com/user-attachments/assets/c2f4cb41-60ac-4572-a91e-5171bfcf24b2" />
+ | <img width="200"  alt="Home" src="https://github.com/user-attachments/assets/ce2611e4-cb99-4287-9a76-47e053706462" />
+| <img width="1066" height="880" alt="Duo 2" src="https://github.com/user-attachments/assets/99f8fd81-6cf9-4caf-a779-1b0e6576e095" />
+ |
+
+---
+
 
 ## 🚀 Instalación y Uso
 
